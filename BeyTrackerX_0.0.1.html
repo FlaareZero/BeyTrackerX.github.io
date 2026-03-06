@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>BeyTracker X</title>
+
+<!-- PWA / Android -->
+<meta name="theme-color" content="#090a0e"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="application-name" content="BeyTracker X"/>
+
+<!-- PWA / iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="BeyTracker X"/>
+
+<!-- Manifest inline via JS blob (single-file PWA) -->
+<script>
+(function(){
+  const manifest = {
+    name: "BeyTracker X",
+    short_name: "BeyTracker",
+    description: "Track your Beyblade X matchups and decks",
+    start_url: ".",
+    display: "standalone",
+    background_color: "#090a0e",
+    theme_color: "#090a0e",
+    orientation: "portrait-primary",
+    icons: [
+      { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='90' fill='%23090a0e'/%3E%3Ccircle cx='256' cy='256' r='190' fill='none' stroke='url(%23g)' stroke-width='24'/%3E%3Ccircle cx='256' cy='256' r='130' fill='none' stroke='url(%23g2)' stroke-width='16'/%3E%3Ccircle cx='256' cy='256' r='40' fill='%2300b4ff'/%3E%3Ctext x='256' y='276' text-anchor='middle' font-size='52' font-family='Arial Black' fill='white'%3E%E2%9A%A1%3C/text%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2300b4ff'/%3E%3Cstop offset='50%25' stop-color='%23a855f7'/%3E%3Cstop offset='100%25' stop-color='%23f59e0b'/%3E%3C/linearGradient%3E%3ClinearGradient id='g2' x1='1' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23f59e0b'/%3E%3Cstop offset='100%25' stop-color='%2322c55e'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E",
+        sizes: "any", type: "image/svg+xml", purpose: "any maskable"
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type:"application/manifest+json"});
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement("link");
+  link.rel = "manifest"; link.href = url;
+  document.currentScript.parentNode.appendChild(link);
+})();
+</script>
+
+<!-- Service Worker (offline + install) -->
+<script>
+if ('serviceWorker' in navigator) {
+  const SW_CODE = `
+const CACHE = 'beytrackerx-v1';
+const ASSETS = [
+  'https://unpkg.com/react@18/umd/react.production.min.js',
+  'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
+  'https://unpkg.com/@babel/standalone/babel.min.js'
+];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => cached))
+  );
+});
+  `;
+  const blob = new Blob([SW_CODE], {type: 'text/javascript'});
+  const url  = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url, {scope: '/'})
+    .catch(() => navigator.serviceWorker.register(url));
+}
+</script>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #090a0e; color: #e0e0ea; font-family: 'Segoe UI', system-ui, sans-serif; }
+  select option { background: #0f1016; color: #ddd; }
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .app { min-height: 100vh; min-height: 100dvh; background-image: radial-gradient(ellipse 90% 40% at 50% -5%, rgba(0,180,255,0.07), transparent); }
+  body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; user-select: none; }
+  .header { padding: max(13px, env(safe-area-inset-top)) 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.35); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(12px); }
+  .logo-spin { width: 28px; height: 28px; border-radius: 50%; background: conic-gradient(from 0deg,#00b4ff,#a855f7,#f59e0b,#22c55e,#00b4ff); animation: spin 8s linear infinite; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .logo-text { font-size: 15px; font-weight: 800; letter-spacing: 1px; }
+  .logo-badges { display: flex; gap: 4px; margin-top: 2px; }
+  .sys-badge { font-size: 8px; letter-spacing: 1px; border-radius: 3px; padding: 0 4px; border-width: 1px; border-style: solid; }
+  .nav { display: flex; gap: 4px; }
+  .nav-btn { border-radius: 5px; padding: 4px 10px; font-size: 10px; cursor: pointer; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; transition: all 0.15s; }
+  .nav-btn.active { background: rgba(0,180,255,0.1); border: 1px solid #00b4ff55; color: #00b4ff; }
+  .nav-btn.inactive { background: transparent; border: 1px solid rgba(255,255,255,0.07); color: #555; }
+
+  .content { max-width: 660px; margin: 0 auto; padding: 13px 10px calc(80px + env(safe-area-inset-bottom)); }
+
+  .my-combo-card { background: linear-gradient(135deg, rgba(0,180,255,0.07), rgba(168,85,247,0.04)); border: 1px solid rgba(0,180,255,0.15); border-radius: 12px; padding: 12px 13px; margin-bottom: 13px; }
+  .card-header { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
+  .card-accent-bar { width: 3px; height: 14px; background: #00b4ff; border-radius: 2px; }
+  .card-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #00b4ff; }
+  .ready-badge { margin-left: auto; font-size: 9px; color: #22c55e; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.18); border-radius: 3px; padding: 2px 7px; }
+  .combo-label { margin-top: 7px; font-size: 11px; color: #999; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; }
+  .section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #444; }
+  .add-btn { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.18); color: #22c55e; border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 700; }
+
+  .opp-card { background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 8px; overflow: hidden; transition: border-color 0.2s; }
+  .opp-body { padding: 11px 12px; }
+  .opp-top { display: flex; gap: 7px; align-items: center; margin-bottom: 8px; }
+  .opp-label-name { flex: 1; font-size: 11px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .preset-btns { display: flex; gap: 3px; }
+  .preset-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); color: #444; border-radius: 3px; padding: 1px 5px; font-size: 9px; cursor: pointer; }
+  .del-btn { background: transparent; border: none; color: #333; cursor: pointer; font-size: 15px; padding: 0 2px; }
+  .opp-actions { display: flex; gap: 5px; margin-top: 8px; }
+  .register-btn { flex: 1; border-radius: 7px; padding: 7px 0; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+  .register-btn.enabled { background: rgba(0,180,255,0.09); border: 1px solid rgba(0,180,255,0.22); color: #00b4ff; }
+  .register-btn.disabled { background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.03); color: #333; cursor: not-allowed; }
+  .expand-btn { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 7px; padding: 7px 10px; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+  .reset-btn { background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.09); color: #5a2a2a; border-radius: 7px; padding: 7px 9px; font-size: 10px; cursor: pointer; }
+  .history-panel { border-top: 1px solid rgba(255,255,255,0.035); padding: 8px 12px; }
+  .history-title { font-size: 9px; color: #3a3a3a; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  .history-row { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 11px; }
+  .history-finish { color: #4a4a4a; flex: 1; }
+  .history-ts { color: #252525; font-size: 10px; }
+
+  .stats-row { display: flex; gap: 11px; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.045); border-radius: 10px; padding: 10px 12px; margin-bottom: 7px; }
+  .stats-rank { font-size: 17px; font-weight: 900; width: 24px; text-align: center; }
+  .stats-info { flex: 1; }
+  .stats-combo-row { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+  .stats-wp { font-size: 22px; font-weight: 900; }
+  .total-card { margin-top: 12px; background: rgba(0,180,255,0.04); border: 1px solid rgba(0,180,255,0.12); border-radius: 10px; padding: 11px 13px; }
+  .total-title { font-size: 9px; color: #3a3a3a; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 7px; }
+  .total-nums { display: flex; gap: 14px; align-items: center; }
+  .total-num { text-align: center; }
+  .total-num-val { font-size: 24px; font-weight: 900; }
+  .total-num-label { font-size: 8px; color: #3a3a3a; }
+  .total-wr { flex: 1; text-align: right; }
+  .total-wr-val { font-size: 30px; font-weight: 900; color: #00b4ff; }
+  .total-wr-label { font-size: 8px; color: #3a3a3a; }
+
+  .bits-db-title { font-size: 10px; color: #3a3a3a; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 11px; }
+  .bits-list { display: flex; flex-direction: column; gap: 6px; }
+  .bit-card { background: rgba(255,255,255,0.02); border-radius: 9px; padding: 9px 12px; }
+  .bit-card-top { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+  .bit-name { font-weight: 800; font-size: 13px; flex: 1; }
+  .bit-notes { font-size: 10px; color: #555; margin-bottom: 7px; }
+  .bit-stats { display: flex; gap: 7px; }
+  .bit-stat { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .bit-stat-row { display: flex; justify-content: space-between; font-size: 8px; color: #3a3a3a; }
+  .bit-stat-bar-bg { height: 3px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
+  .bit-stat-bar { height: 100%; }
+
+  .type-filters { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+  .type-filter-btn { border-radius: 5px; padding: 4px 11px; font-size: 10px; cursor: pointer; font-weight: 700; border-width: 1px; border-style: solid; }
+
+  .combo-form { display: flex; flex-direction: column; gap: 6px; }
+  .sys-toggle { display: flex; gap: 4px; }
+  .sys-btn { border-radius: 5px; padding: 3px 10px; font-size: 11px; cursor: pointer; font-weight: 800; border-width: 1px; border-style: solid; }
+  .row2 { display: flex; gap: 5px; }
+  .bit-type-filters { display: flex; gap: 3px; flex-wrap: wrap; }
+  .bit-type-btn { border-radius: 4px; padding: 2px 7px; font-size: 9px; cursor: pointer; font-weight: 700; border-width: 1px; border-style: solid; }
+  .bit-info-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 7px 9px; }
+  .bit-info-top { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+  .bit-info-note { font-size: 10px; color: #555; flex: 1; }
+  .bit-mini-stats { display: flex; gap: 8px; }
+  .bit-mini-stat { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .bit-mini-label { font-size: 8px; color: #444; }
+  .bit-mini-val { font-size: 10px; font-weight: 800; }
+  .bar-bg { width: 100%; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; }
+
+  .wbar { display: flex; height: 4px; border-radius: 2px; overflow: hidden; gap: 1px; }
+  .wbar-empty { height: 4px; background: rgba(255,255,255,0.04); border-radius: 2px; }
+  .chip { border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; border-width: 1px; border-style: solid; }
+  .chips-row { display: flex; gap: 5px; margin-top: 3px; align-items: center; }
+  .match-count { color: #3a3a3a; font-size: 10px; }
+  .wp-display { margin-left: auto; font-size: 16px; font-weight: 900; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: flex-end; justify-content: center; z-index: 200; backdrop-filter: blur(10px); }
+  .modal-sheet { background: #0f1016; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px 14px 0 0; padding: 17px 17px 32px; width: 100%; max-width: 460px; box-shadow: 0 -20px 60px rgba(0,0,0,0.8); }
+  .modal-handle { width: 32px; height: 3px; background: #222; border-radius: 2px; margin: 0 auto 13px; }
+  .modal-subtitle { font-size: 11px; color: #444; margin-bottom: 3px; }
+  .modal-vs { font-size: 13px; font-weight: 800; margin-bottom: 11px; color: #ccc; }
+  .modal-finish-label { font-size: 9px; color: #3a3a3a; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  .modal-finish-btns { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 11px; }
+  .finish-btn { border-radius: 5px; padding: 5px 9px; font-size: 11px; cursor: pointer; font-weight: 600; border-width: 1px; border-style: solid; }
+  .result-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .result-btn { border-width: 2px; border-style: solid; border-radius: 9px; padding: 13px 0; font-size: 13px; font-weight: 800; cursor: pointer; }
+
+  .badge { font-size: 9px; font-weight: 700; border-radius: 3px; padding: 1px 5px; border-width: 1px; border-style: solid; }
+  .flex-center { display: flex; align-items: center; gap: 9px; }
+  .empty-msg { color: #2a2a2a; text-align: center; padding: 30px; font-size: 13px; }
+
+  select { display: block; }
+
+  /* ── RESPONSIVE ──────────────────────────────────────────── */
+
+  /* ── DESKTOP (pointer: fine = mouse) ───────────────────── */
+  @media (pointer: fine) {
+    body { overscroll-behavior: auto; user-select: auto; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+    ::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #333; }
+
+    /* Shell: sidebar + content side by side */
+    .app { display: flex; flex-direction: column; }
+    .desktop-shell { display: flex; flex: 1; min-height: 0; }
+    .sidebar {
+      width: 200px; flex-shrink: 0;
+      background: rgba(0,0,0,0.4);
+      border-right: 1px solid rgba(255,255,255,0.05);
+      display: flex; flex-direction: column;
+      padding: 16px 10px;
+      position: sticky; top: 0; height: calc(100vh - 54px);
+      overflow-y: auto;
+    }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+    .sidebar-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      border: 1px solid transparent; text-align: left;
+      transition: all 0.15s; letter-spacing: 0.3px;
+      text-transform: capitalize;
+    }
+    .sidebar-btn:hover { background: rgba(255,255,255,0.04); color: #999; }
+    .sidebar-btn.active { background: rgba(0,180,255,0.1); border-color: rgba(0,180,255,0.25); color: #00b4ff; }
+    .sidebar-btn.inactive { background: transparent; color: #444; }
+    .sidebar-icon { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
+    .sidebar-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 8px 0; }
+
+    /* Main content area */
+    .desktop-main { flex: 1; min-width: 0; overflow-y: auto; }
+    .content { max-width: 900px; padding: 16px 20px 40px; }
+
+    /* Header: hide nav buttons, show just logo */
+    .nav { display: none; }
+    .header { padding: 12px 20px; }
+
+    /* 2-column tracker layout */
+    .desktop-tracker-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .desktop-left-col { position: sticky; top: 16px; }
+    .desktop-right-col { min-width: 0; }
+
+    /* Bigger, cleaner cards */
+    .my-combo-card { margin-bottom: 0; }
+    .opp-card:hover { border-color: rgba(255,255,255,0.1) !important; }
+
+    /* Button hover states */
+    .add-btn:hover { background: rgba(34,197,94,0.15); }
+    .register-btn.enabled:hover { background: rgba(0,180,255,0.18); }
+    .del-btn:hover { color: #ef4444; }
+    .preset-btn:hover { background: rgba(255,255,255,0.07); color: #aaa; }
+    .sys-btn:hover { opacity: 0.85; }
+    .expand-btn:hover { background: rgba(0,180,255,0.08); }
+    .nav-btn:hover { background: rgba(255,255,255,0.04); color: #888; }
+
+    /* Modal: centered dialog instead of bottom sheet */
+    .modal-overlay { align-items: center; }
+    .modal-sheet {
+      border-radius: 14px !important;
+      max-width: 480px;
+      padding-bottom: 20px !important;
+    }
+    .modal-handle { display: none; }
+
+    /* Slightly larger selects */
+    select { font-size: 13px !important; padding: 8px 24px 8px 10px !important; }
+
+    /* Bits: 2-col grid */
+    .bits-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    /* Stats: wider */
+    .stats-wp { font-size: 26px; }
+
+    /* Bottom nav: hidden on desktop */
+    .bottom-nav { display: none !important; }
+  }
+
+  /* ── TOUCH (pointer: coarse = finger) ───────────────────── */
+  @media (pointer: coarse) {
+    /* No desktop shell on touch */
+    .desktop-shell { display: contents; }
+    .sidebar { display: none !important; }
+    .desktop-main { display: contents; }
+    .desktop-tracker-grid { display: contents; }
+    .desktop-left-col { display: contents; }
+    .desktop-right-col { display: contents; }
+
+    /* Bigger touch targets everywhere */
+    button { min-height: 36px; }
+    .register-btn { min-height: 44px !important; font-size: 13px !important; }
+    .result-btn { padding: 16px 0 !important; font-size: 15px !important; }
+    .finish-btn { padding: 8px 12px !important; font-size: 12px !important; }
+    .sys-btn { padding: 6px 14px !important; font-size: 12px !important; }
+    .add-btn { padding: 7px 14px !important; font-size: 12px !important; }
+    .nav-btn { padding: 6px 12px !important; font-size: 10px !important; }
+    .expand-btn { padding: 10px 14px !important; }
+    .del-btn { padding: 4px 8px !important; font-size: 18px !important; }
+    .deck-count-btn { width: 32px !important; height: 32px !important; font-size: 18px !important; }
+    .preset-btn { padding: 4px 8px !important; font-size: 10px !important; }
+    select { font-size: 16px !important; padding: 10px 28px 10px 10px !important; min-height: 42px; }
+
+    /* Bottom tab bar */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
+      background: rgba(9,10,14,0.97);
+      border-top: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      padding-bottom: env(safe-area-inset-bottom);
+      backdrop-filter: blur(16px);
+    }
+    .bottom-nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 3px;
+      padding: 8px 4px 6px;
+      border: none; background: transparent; cursor: pointer;
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; transition: color 0.15s;
+    }
+    .bottom-nav-btn .bnav-icon { font-size: 18px; line-height: 1; }
+    .bottom-nav-btn.active { color: #00b4ff; }
+    .bottom-nav-btn.inactive { color: #383838; }
+    .bottom-nav-btn.active .bnav-icon { filter: drop-shadow(0 0 6px #00b4ff88); }
+
+    /* Hide top nav on touch — bottom bar replaces it */
+    .nav { display: none; }
+
+    /* Extra scroll padding for bottom nav */
+    .content { padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
+  }
+
+  /* ── DECK PAGE ─────────────────────────────────────────────────── */
+  .deck-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
+  .deck-header { display: flex; align-items: center; gap: 8px; padding: 11px 13px 0; }
+  .deck-name-input { background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.08); color: #ddd; font-size: 14px; font-weight: 800; flex: 1; outline: none; padding: 2px 0; letter-spacing: 0.5px; }
+  .deck-name-input:focus { border-bottom-color: #00b4ff55; }
+  .deck-del-btn { background: transparent; border: none; color: #2a2a2a; cursor: pointer; font-size: 16px; padding: 0 3px; }
+  .deck-del-btn:hover { color: #ef4444; }
+  .deck-section-label { font-size: 9px; color: #3a3a3a; text-transform: uppercase; letter-spacing: 1.5px; padding: 10px 13px 5px; }
+  .deck-combos { display: flex; flex-direction: column; gap: 0; }
+  .deck-combo-slot { padding: 8px 13px; border-top: 1px solid rgba(255,255,255,0.04); }
+  .deck-combo-slot-header { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+  .deck-slot-num { font-size: 9px; font-weight: 800; color: #555; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 1px 6px; min-width: 22px; text-align: center; }
+  .deck-slot-label { font-size: 11px; font-weight: 700; color: #ccc; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .deck-bonus-controls { display: flex; align-items: center; gap: 7px; padding: 0 13px 11px; }
+  .deck-bonus-label { font-size: 9px; color: #3a3a3a; text-transform: uppercase; letter-spacing: 1px; flex: 1; }
+  .deck-count-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #666; border-radius: 5px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; font-weight: 700; }
+  .deck-count-btn:hover { color: #ddd; border-color: rgba(255,255,255,0.2); }
+  .deck-count-val { font-size: 13px; font-weight: 800; color: #aaa; min-width: 18px; text-align: center; }
+  .deck-completeness { display: flex; gap: 5px; padding: 0 13px 11px; flex-wrap: wrap; }
+  .deck-pill { font-size: 9px; font-weight: 700; border-radius: 20px; padding: 2px 8px; border: 1px solid transparent; }
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useReducer, useCallback } = React;
+
+// ── DATA ──────────────────────────────────────────────────────────────────
+const BX_BLADES = ["Dran Sword","Hells Scythe","Wizard Arrow","Knight Shield","Knight Lance","Shark Edge","Leon Claw","Viper Tail","Rhino Horn","Dran Dagger","Hells Chain","Phoenix Wing","Wyvern Gale","Unicorn Sting","Sphinx Cowl","Tyranno Beat","Weiss Tiger","Cobalt Dragoon","Black Shell","Whale Wave","Bear Scratch","Crimson Garuda","Shelter Drake","Tricera Press","Samurai Calibur","Goat Tackle","Cobalt Drake","Phoenix Feather","Mammoth Tusk","Croc Crunch","Samurai Steel","Shinobi Knife","Tyranno Roar"];
+const UX_BLADES = ["Dran Buster","Hells Hammer","Wizard Rod","Shinobi Shadow","Leon Crest","Phoenix Rudder","Silver Wolf","Samurai Saber","Knight Mail","Ptera Swing","Impact Drake","Ghost Circle","Golem Rock","Scorpio Spear","Shark Scale","Clock Mirage","Meteor Dragoon","Mummy Curse","Aero Pegasus","Wyvern Hover","Orochi Cluster"];
+const CX_BLADES = ["Courage Dran","Wizard Arc","Perseus Dark","Hells Reaper","Rhino Reaper","Fox Brush","Pegasus Blast","Cerberus Flame","Whale Flame","Sol Eclipse","Wolf Hunt","Emperor Might","Phoenix Flare","Bahamut Blitz","Knight Fortress","Ragna Rage","Kraken Wriggle","Valkyrie Volt","Leon Fang","Antler Stag"];
+const CX_LOCK_CHIPS = ["Dran","Wizard","Perseus","Valkyrie","Pegasus","Emperor","Sol","Wolf","Phoenix","Knight","Hells","Leon","Shark","Rhino","Cobalt","Cerberus","Fox","Whale","Bahamut","Ragna","Kraken"];
+const CX_MAIN_BLADES = ["Brave","Arc","Dark","Reaper","Blast","Flame","Eclipse","Hunt","Might","Flare","Blitz","Fortress","Rage","Wriggle","Volt","Fang","Brush","Fort"];
+const CX_ASSIST_BLADES = ["Slash","Heavy","Free","Assault","Zillion","Dual","Turn","Massive","Wheel","Jaggy","Knuckle","Round","Vertical","Erase","Charge","Bumper"];
+const RATCHETS = ["1-60","2-60","3-60","4-60","5-60","7-60","9-60","1-70","3-70","4-70","5-70","7-70","9-70","0-80","1-80","2-80","3-80","4-80","5-80","6-80","7-80","9-80","0-70","D5-70","S6-60","F0-60","ATr"];
+
+const BITS_DATA = [
+  { name:"Flat",       type:"Attack",  speed:9,stamina:3,defense:2,burst:4, notes:"Pattern a fiore aggressivo, alto potenziale KO" },
+  { name:"Low Flat",   type:"Attack",  speed:9,stamina:3,defense:2,burst:4, notes:"Profilo basso, ancora più aggressivo del Flat" },
+  { name:"Gear Flat",  type:"Attack",  speed:8,stamina:4,defense:2,burst:5, notes:"Denti ingranaggio boost velocità Xtreme dash" },
+  { name:"Rush",       type:"Attack",  speed:8,stamina:5,defense:3,burst:6, notes:"Auto-KO ridotto, movimento consistente e sicuro" },
+  { name:"Low Rush",   type:"Attack",  speed:9,stamina:4,defense:2,burst:5, notes:"Profilo ultra-basso, massimizza contatti ratchet" },
+  { name:"Point",      type:"Attack",  speed:7,stamina:6,defense:3,burst:5, notes:"Bilanciato attacco/stamina, flower pattern" },
+  { name:"Taper",      type:"Attack",  speed:6,stamina:7,defense:3,burst:6, notes:"Attacco con backup stamina, forte nel finale" },
+  { name:"Trans",      type:"Attack",  speed:7,stamina:5,defense:4,burst:5, notes:"Comportamento adattivo in base al lancio (CX)" },
+  { name:"High Taper", type:"Attack",  speed:6,stamina:6,defense:3,burst:6, notes:"Versione alta del Taper, più stabile" },
+  { name:"Ball",       type:"Stamina", speed:3,stamina:9,defense:5,burst:7, notes:"Top competitivo, alto LAD, perfetto su Wizard Rod" },
+  { name:"Orb",        type:"Stamina", speed:2,stamina:8,defense:4,burst:8, notes:"Tenuta centrale passiva, ottima resistenza al burst" },
+  { name:"High Needle",type:"Stamina", speed:2,stamina:8,defense:4,burst:7, notes:"Punta stretta, ideale per build bilanciate" },
+  { name:"Disk Ball",  type:"Stamina", speed:3,stamina:9,defense:6,burst:7, notes:"Disco grande, LAD eccellente e stabilità superiore" },
+  { name:"Free Ball",  type:"Stamina", speed:3,stamina:8,defense:6,burst:8, notes:"Ball girevole, ibrido stamina/difesa, burst ridotto" },
+  { name:"Level",      type:"Stamina", speed:9,stamina:6,defense:5,burst:4, notes:"Tre livelli di velocità in base al contatto con lo stadio. La rail fa accelerare terribilmente il bey." },
+  { name:"Elevate",    type:"Stamina", speed:4,stamina:7,defense:5,burst:5, notes:"Specialista spin equalization, chiave per Cobalt Dragoon" },
+  { name:"Hexa",       type:"Stamina", speed:3,stamina:7,defense:6,burst:7, notes:"6 lati di stabilità, solida difesa contro attaccanti" },
+  { name:"Needle",     type:"Defense", speed:2,stamina:5,defense:8,burst:6, notes:"Punta aguzzo assorbe colpi, si muove al contatto" },
+  { name:"Spike",      type:"Defense", speed:2,stamina:4,defense:8,burst:5, notes:"Molto stretto, evasione LAD massimizzata" },
+  { name:"Dot",        type:"Defense", speed:1,stamina:5,defense:8,burst:7, notes:"Contatto minimo, eccellente evasione sotto pressione" },
+  { name:"Gear Needle",type:"Defense", speed:3,stamina:5,defense:7,burst:6, notes:"Difesa boost ingranaggio, si muove al contatto" },
+  { name:"Wedge",      type:"Defense", speed:3,stamina:4,defense:7,burst:4, notes:"Permette di resistere bene ai colpi sfruttando il piccolo punto di contatto" },
+  { name:"Wall Wedge", type:"Defense", speed:4,stamina:4,defense:6,burst:3, notes:"Simile alla Wedge ma più stabile grazie alle protuzioni sotto la punta" },
+  { name:"Operate",    type:"Balance", speed:5,stamina:6,defense:5,burst:6, notes:"Comportamento variabile in base all'angolo di lancio" },
+  { name:"Glide",      type:"Balance", speed:4,stamina:6,defense:6,burst:7, notes:"Base rotonda, movimento bilanciato consistente" },
+  { name:"Wall Ball",  type:"Balance", speed:4,stamina:5,defense:7,burst:5, notes:"Anello wall stabilizza la punta a forma di ball contro il pavimento dello stadio" },
+];
+const BITS_MAP = Object.fromEntries(BITS_DATA.map(b => [b.name, b]));
+const BIT_NAMES = BITS_DATA.map(b => b.name);
+const BIT_TYPES = ["All", "Attack", "Stamina", "Defense", "Balance"];
+
+const META_PRESETS = [
+  { label:"Wizard Rod 1-60 Hexa",        system:"UX", blade:"Wizard Rod",     ratchet:"1-60", bit:"Hexa" },
+  { label:"Cobalt Dragoon 5-60 Elevate", system:"BX", blade:"Cobalt Dragoon", ratchet:"5-60", bit:"Elevate" },
+  { label:"Shark Scale 1-70 Low Rush",   system:"UX", blade:"Shark Scale",    ratchet:"1-70", bit:"Low Rush" },
+];
+const FINISH_TYPES = ["KO", "Xtreme Finish", "Burst", "OS (Outspin)", "Pareggio"];
+
+const SYS_COL = { BX:"#00b4ff", UX:"#a855f7", CX:"#f59e0b" };
+const TYPE_COL = { Attack:"#ef4444", Stamina:"#22c55e", Defense:"#3b82f6", Balance:"#f59e0b" };
+const STAT_BARS = [["VEL","speed","#ef4444"],["STA","stamina","#22c55e"],["DIF","defense","#3b82f6"],["BST","burst","#f59e0b"]];
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+const comboLabel = c => {
+  if (!c) return "—";
+  if (c.system === "CX")
+    return (c.lockChip && c.mainBlade && c.assistBlade && c.ratchet && c.bit)
+      ? `${c.lockChip} ${c.mainBlade} / ${c.assistBlade} ${c.ratchet} ${c.bit}` : "CX incompleta";
+  return (c.blade && c.ratchet && c.bit) ? `${c.blade} ${c.ratchet} ${c.bit}` : "—";
+};
+const isComplete = c => {
+  if (!c) return false;
+  if (c.system === "CX") return !!(c.lockChip && c.mainBlade && c.assistBlade && c.ratchet && c.bit);
+  return !!(c.blade && c.ratchet && c.bit);
+};
+const blankCombo = () => ({ system:"BX", blade:"", lockChip:"", mainBlade:"", assistBlade:"", ratchet:"", bit:"" });
+const makeOpp = (id, p) => ({ id, wins:0, losses:0, draws:0, history:[], system:p?.system||"BX", blade:p?.blade||"", lockChip:"", mainBlade:"", assistBlade:"", ratchet:p?.ratchet||"", bit:p?.bit||"" });
+const ts = () => new Date().toLocaleTimeString("it-IT", { hour:"2-digit", minute:"2-digit" });
+const makeBlankDeck = (id) => ({
+  id,
+  name: `Deck ${id}`,
+  combos: [blankCombo(), blankCombo(), blankCombo()],
+  bonus: [blankCombo()],
+  bonusCount: 1,
+});
+
+// ── PERSISTENCE ───────────────────────────────────────────────────────────
+const STORAGE_KEY = "beytrackerx_v2";
+const saveState = state => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify({...state, _savedAt: Date.now()})); } catch(_) {} };
+const loadState = () => { try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch(_) { return null; } };
+
+// ── REDUCER ───────────────────────────────────────────────────────────────
+const initState = (() => {
+  const saved = loadState();
+  return {
+    myCombo:    saved?.myCombo    || blankCombo(),
+    opponents:  saved?.opponents  || [makeOpp(1,META_PRESETS[0]), makeOpp(2,META_PRESETS[1]), makeOpp(3,META_PRESETS[2])],
+    nextId:     saved?.nextId     || 4,
+    view:       saved?.view       || "tracker",
+    decks:      saved?.decks      || [],
+    nextDeckId: saved?.nextDeckId || 1,
+  };
+})();
+
+function reducer(s, a) {
+  let next;
+  switch (a.type) {
+    case "MY":     next = { ...s, myCombo: { ...s.myCombo, [a.f]: a.v } }; break;
+    case "OPP":    next = { ...s, opponents: s.opponents.map(o => o.id===a.id ? { ...o, [a.f]:a.v } : o) }; break;
+    case "ADD":    next = { ...s, opponents: [...s.opponents, makeOpp(s.nextId)], nextId: s.nextId+1 }; break;
+    case "DEL":    next = { ...s, opponents: s.opponents.filter(o => o.id !== a.id) }; break;
+    case "RESET":  next = { ...s, opponents: s.opponents.map(o => o.id===a.id ? { ...o, wins:0, losses:0, draws:0, history:[] } : o) }; break;
+    case "PRESET": {
+      const p = META_PRESETS[a.idx];
+      next = { ...s, opponents: s.opponents.map(o => o.id===a.id ? { ...o, system:p.system, blade:p.blade, ratchet:p.ratchet, bit:p.bit, lockChip:"", mainBlade:"", assistBlade:"" } : o) };
+      break;
+    }
+    case "LOG": {
+      next = { ...s, opponents: s.opponents.map(o => {
+        if (o.id !== a.oppId) return o;
+        return { ...o,
+          wins:   a.r==="win"  ? o.wins+1   : o.wins,
+          losses: a.r==="loss" ? o.losses+1 : o.losses,
+          draws:  a.r==="draw" ? o.draws+1  : o.draws,
+          history: [{ id:Date.now(), result:a.r, finish:a.finish, ts:ts() }, ...o.history],
+        };
+      })};
+      break;
+    }
+    case "DECK_ADD":
+      next = { ...s, decks: [...s.decks, makeBlankDeck(s.nextDeckId)], nextDeckId: s.nextDeckId+1 };
+      break;
+    case "DECK_DEL":
+      next = { ...s, decks: s.decks.filter(dk => dk.id !== a.id) };
+      break;
+    case "DECK_NAME":
+      next = { ...s, decks: s.decks.map(dk => dk.id===a.id ? { ...dk, name: a.v } : dk) };
+      break;
+    case "DECK_BONUS_COUNT": {
+      next = { ...s, decks: s.decks.map(dk => {
+        if (dk.id !== a.id) return dk;
+        const cur = dk.bonus.length;
+        const target = Math.max(1, Math.min(6, a.v));
+        let bonus = [...dk.bonus];
+        if (target > cur) for (let i=cur; i<target; i++) bonus.push(blankCombo());
+        else bonus = bonus.slice(0, target);
+        return { ...dk, bonus, bonusCount: target };
+      })};
+      break;
+    }
+    case "DECK_COMBO": {
+      next = { ...s, decks: s.decks.map(dk => {
+        if (dk.id !== a.deckId) return dk;
+        if (a.slot === "main") {
+          const combos = dk.combos.map((cb, i) => i===a.idx ? { ...cb, [a.f]: a.v } : cb);
+          return { ...dk, combos };
+        } else {
+          const bonus = dk.bonus.map((cb, i) => i===a.idx ? { ...cb, [a.f]: a.v } : cb);
+          return { ...dk, bonus };
+        }
+      })};
+      break;
+    }
+    case "RESTORE": {
+      next = {
+        myCombo:    a.data.myCombo    || blankCombo(),
+        opponents:  a.data.opponents  || [],
+        nextId:     a.data.nextId     || 1,
+        decks:      a.data.decks      || [],
+        nextDeckId: a.data.nextDeckId || 1,
+        view:       "tracker",
+      };
+      break;
+    }
+    case "FACTORY_RESET": {
+      next = {
+        myCombo:    blankCombo(),
+        opponents:  [makeOpp(1,META_PRESETS[0]), makeOpp(2,META_PRESETS[1]), makeOpp(3,META_PRESETS[2])],
+        nextId:     4,
+        decks:      [],
+        nextDeckId: 1,
+        view:       "tracker",
+      };
+      break;
+    }
+    case "VIEW":   next = { ...s, view: a.v }; break;
+    default:       return s;
+  }
+  saveState(next);
+  return next;
+}
+
+// ── UI COMPONENTS ─────────────────────────────────────────────────────────
+function Sel({ val, onChange, opts, ph, accent="#00b4ff" }) {
+  return (
+    <select value={val} onChange={e => onChange(e.target.value)} style={{
+      background: val ? `${accent}14` : "rgba(255,255,255,0.03)",
+      border: `1px solid ${val ? accent+"55" : "rgba(255,255,255,0.08)"}`,
+      borderRadius:6, color: val ? "#ddd" : "#555",
+      padding:"6px 22px 6px 8px", fontSize:12, flex:1, minWidth:0,
+      outline:"none", cursor:"pointer", appearance:"none",
+      backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23555'/%3E%3C/svg%3E")`,
+      backgroundRepeat:"no-repeat", backgroundPosition:"right 6px center",
+    }}>
+      <option value="">{ph}</option>
+      {opts.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  );
+}
+
+function SysBadge({ sys }) {
+  const c = SYS_COL[sys] || "#888";
+  return <span className="badge" style={{ color:c, background:`${c}14`, borderColor:`${c}44` }}>{sys}</span>;
+}
+
+function TypeBadge({ type }) {
+  const c = TYPE_COL[type];
+  return <span className="badge" style={{ color:c, background:`${c}18`, borderColor:`${c}44` }}>{type}</span>;
+}
+
+function SysToggle({ val, onChange }) {
+  return (
+    <div className="sys-toggle">
+      {["BX","UX","CX"].map(s => {
+        const c = SYS_COL[s];
+        return <button key={s} className="sys-btn" onClick={() => onChange(s)} style={{
+          background: val===s ? `${c}22` : "rgba(255,255,255,0.03)",
+          borderColor: val===s ? c : "rgba(255,255,255,0.07)",
+          color: val===s ? c : "#555",
+        }}>{s}</button>;
+      })}
+    </div>
+  );
+}
+
+function BitPicker({ value, onChange, accent }) {
+  const [tf, setTf] = useState("All");
+  const ac = accent || "#00b4ff";
+  const filtered = tf === "All" ? BIT_NAMES : BIT_NAMES.filter(n => BITS_MAP[n].type === tf);
+  const info = value ? BITS_MAP[value] : null;
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+      <div className="bit-type-filters">
+        {BIT_TYPES.map(t => {
+          const c = TYPE_COL[t] || ac;
+          const active = tf === t;
+          return <button key={t} className="bit-type-btn" onClick={() => setTf(t)} style={{
+            background: active ? `${c}1a` : "rgba(255,255,255,0.02)",
+            borderColor: active ? `${c}66` : "rgba(255,255,255,0.06)",
+            color: active ? c : "#444",
+          }}>{t}</button>;
+        })}
+      </div>
+      <Sel val={value} onChange={onChange} opts={filtered} ph="Punta" accent={ac} />
+      {info && (
+        <div className="bit-info-card">
+          <div className="bit-info-top">
+            <TypeBadge type={info.type} />
+            <span className="bit-info-note">{info.notes}</span>
+          </div>
+          <div className="bit-mini-stats">
+            {STAT_BARS.map(([l, k, c]) => (
+              <div key={l} className="bit-mini-stat">
+                <span className="bit-mini-label">{l}</span>
+                <div className="bar-bg"><div className="bar-fill" style={{ width:`${info[k]*10}%`, background:c }} /></div>
+                <span className="bit-mini-val" style={{ color:c }}>{info[k]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ComboForm({ combo, onChange, accent }) {
+  const blades = combo.system==="UX" ? UX_BLADES : combo.system==="CX" ? CX_BLADES : BX_BLADES;
+  const ac = accent || SYS_COL[combo.system] || "#00b4ff";
+  return (
+    <div className="combo-form">
+      <SysToggle val={combo.system} onChange={v => onChange("system", v)} />
+      {combo.system === "CX" ? (
+        <>
+          <div className="row2">
+            <Sel val={combo.lockChip}    onChange={v=>onChange("lockChip",v)}    opts={CX_LOCK_CHIPS}    ph="Lock Chip"    accent={ac} />
+            <Sel val={combo.mainBlade}   onChange={v=>onChange("mainBlade",v)}   opts={CX_MAIN_BLADES}   ph="Main Blade"   accent={ac} />
+          </div>
+          <div className="row2">
+            <Sel val={combo.assistBlade} onChange={v=>onChange("assistBlade",v)} opts={CX_ASSIST_BLADES} ph="Assist Blade" accent={ac} />
+            <Sel val={combo.ratchet}     onChange={v=>onChange("ratchet",v)}     opts={RATCHETS}         ph="Ratchet"      accent={ac} />
+          </div>
+        </>
+      ) : (
+        <div className="row2">
+          <Sel val={combo.blade}   onChange={v=>onChange("blade",v)}   opts={blades}   ph="Blade"   accent={ac} />
+          <Sel val={combo.ratchet} onChange={v=>onChange("ratchet",v)} opts={RATCHETS} ph="Ratchet" accent={ac} />
+        </div>
+      )}
+      <BitPicker value={combo.bit} onChange={v => onChange("bit", v)} accent={ac} />
+    </div>
+  );
+}
+
+function WBar({ wins, losses, draws }) {
+  const t = wins + losses + draws;
+  if (!t) return <div className="wbar-empty" />;
+  return (
+    <div className="wbar">
+      <div style={{ width:`${wins/t*100}%`,   background:"#22c55e" }} />
+      <div style={{ width:`${draws/t*100}%`,  background:"#f59e0b" }} />
+      <div style={{ flex:1, background:"rgba(239,68,68,0.45)" }} />
+    </div>
+  );
+}
+
+function Chip({ label, color }) {
+  return <span className="chip" style={{ color, background:`${color}18`, borderColor:`${color}44` }}>{label}</span>;
+}
+
+function ResultIcon({ result }) {
+  const map = { win:["▲WIN","#22c55e"], loss:["▼LOSS","#ef4444"], draw:["=PARI","#f59e0b"] };
+  const [l, c] = map[result] || ["?","#888"];
+  return <span style={{ color:c, fontWeight:800, fontSize:10 }}>{l}</span>;
+}
+
+// ── PAGE COMPONENTS ───────────────────────────────────────────────────────
+function BitsPage() {
+  const [tf, setTf] = useState("All");
+  const filtered = tf === "All" ? BITS_DATA : BITS_DATA.filter(b => b.type === tf);
+  return (
+    <div>
+      <div className="bits-db-title">Database Punte · {filtered.length} parti</div>
+      <div className="type-filters">
+        {BIT_TYPES.map(t => {
+          const c = TYPE_COL[t] || "#00b4ff";
+          const active = tf === t;
+          return <button key={t} className="type-filter-btn" onClick={() => setTf(t)} style={{
+            background: active ? `${c}1a` : "rgba(255,255,255,0.03)",
+            borderColor: active ? `${c}55` : "rgba(255,255,255,0.06)",
+            color: active ? c : "#444",
+          }}>{t}</button>;
+        })}
+      </div>
+      <div className="bits-list">
+        {filtered.map(info => {
+          const c = TYPE_COL[info.type];
+          return (
+            <div key={info.name} className="bit-card" style={{ border:`1px solid ${c}1a` }}>
+              <div className="bit-card-top">
+                <span className="bit-name">{info.name}</span>
+                <TypeBadge type={info.type} />
+              </div>
+              <div className="bit-notes">{info.notes}</div>
+              <div className="bit-stats">
+                {STAT_BARS.map(([l, k, bc]) => (
+                  <div key={l} className="bit-stat">
+                    <div className="bit-stat-row"><span>{l === "VEL" ? "VELOCITÀ" : l === "DIF" ? "DIFESA" : l === "BST" ? "BURST RES" : l}</span><span style={{ color:bc, fontWeight:700 }}>{info[k]}</span></div>
+                    <div className="bit-stat-bar-bg"><div className="bit-stat-bar" style={{ width:`${info[k]*10}%`, background:bc }} /></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function StatsPage({ opponents }) {
+  const active = [...opponents]
+    .filter(o => o.wins + o.losses + o.draws > 0)
+    .sort((a, b) => (b.wins/(b.wins+b.losses+b.draws)) - (a.wins/(a.wins+a.losses+a.draws)));
+  const tw = opponents.reduce((s,o) => s+o.wins, 0);
+  const tl = opponents.reduce((s,o) => s+o.losses, 0);
+  const td = opponents.reduce((s,o) => s+o.draws, 0);
+  const tt = tw + tl + td;
+  const rankColors = ["#22c55e","#aaa","#444"];
+
+  return (
+    <div>
+      {active.length === 0 && <div className="empty-msg">Registra qualche risultato nel Tracker.</div>}
+      {active.map((o, rank) => {
+        const t = o.wins + o.losses + o.draws;
+        const wp = Math.round(o.wins / t * 100);
+        return (
+          <div key={o.id} className="stats-row">
+            <div className="stats-rank" style={{ color: rankColors[rank] || "#444" }}>#{rank+1}</div>
+            <div className="stats-info">
+              <div className="stats-combo-row">
+                <SysBadge sys={o.system} />
+                <span style={{ fontWeight:700, fontSize:12 }}>{comboLabel(o)}</span>
+              </div>
+              <WBar wins={o.wins} losses={o.losses} draws={o.draws} />
+              <div className="chips-row">
+                <Chip label={`${o.wins}W`} color="#22c55e" />
+                <Chip label={`${o.losses}L`} color="#ef4444" />
+                <Chip label={`${o.draws}P`} color="#f59e0b" />
+                <span className="match-count">{t} match</span>
+              </div>
+            </div>
+            <div className="stats-wp" style={{ color: wp>=60?"#22c55e":wp>=40?"#f59e0b":"#ef4444" }}>{wp}%</div>
+          </div>
+        );
+      })}
+      {tt > 0 && (
+        <div className="total-card">
+          <div className="total-title">Record Totale</div>
+          <div className="total-nums">
+            {[["VINTE",tw,"#22c55e"],["PERSE",tl,"#ef4444"],["PARI",td,"#f59e0b"]].map(([l,v,c]) => (
+              <div key={l} className="total-num">
+                <div className="total-num-val" style={{ color:c }}>{v}</div>
+                <div className="total-num-label">{l}</div>
+              </div>
+            ))}
+            <div className="total-wr">
+              <div className="total-wr-val">{Math.round(tw/tt*100)}%</div>
+              <div className="total-wr-label">WIN RATE</div>
+            </div>
+          </div>
+          <WBar wins={tw} losses={tl} draws={td} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ── DECK PAGE ─────────────────────────────────────────────────────────────
+function DeckSlot({ combo, deckId, slot, idx, dispatch }) {
+  const ok = isComplete(combo);
+  const ac = SYS_COL[combo.system] || "#888";
+  const [open, setOpen] = useState(false);
+  const onChange = (f, v) => dispatch({ type:"DECK_COMBO", deckId, slot, idx, f, v });
+  return (
+    <div className="deck-combo-slot">
+      <div className="deck-combo-slot-header">
+        <span className="deck-slot-num">{slot === "main" ? idx+1 : `B${idx+1}`}</span>
+        <span className="deck-slot-label" style={{ color: ok ? "#ccc" : "#333" }}>
+          {ok ? (
+            <span style={{ display:"flex", alignItems:"center", gap:5 }}>
+              <SysBadge sys={combo.system} />
+              {comboLabel(combo)}
+            </span>
+          ) : <span style={{ color:"#2a2a2a" }}>Non configurata</span>}
+        </span>
+        <button onClick={() => setOpen(o=>!o)} style={{
+          background: open ? `${ac}18` : "rgba(255,255,255,0.03)",
+          border: `1px solid ${open ? ac+"44" : "rgba(255,255,255,0.06)"}`,
+          color: open ? ac : "#444", borderRadius:5, padding:"2px 8px", fontSize:9, cursor:"pointer", fontWeight:700,
+        }}>{open ? "▲" : "▼"}</button>
+      </div>
+      {open && <ComboForm combo={combo} onChange={onChange} accent={ac} />}
+    </div>
+  );
+}
+
+function DeckCard({ deck, dispatch }) {
+  const mainComplete = deck.combos.filter(isComplete).length;
+  const bonusComplete = deck.bonus.filter(isComplete).length;
+  const total = 3 + deck.bonus.length;
+  const done = mainComplete + bonusComplete;
+  return (
+    <div className="deck-card">
+      <div className="deck-header">
+        <input
+          className="deck-name-input"
+          value={deck.name}
+          onChange={e => dispatch({ type:"DECK_NAME", id:deck.id, v:e.target.value })}
+          placeholder="Nome deck..."
+        />
+        <div style={{ display:"flex", gap:5, alignItems:"center" }}>
+          <span style={{ fontSize:10, color: done===total ? "#22c55e" : "#555", fontWeight:700 }}>{done}/{total}</span>
+          <button className="deck-del-btn" onClick={() => dispatch({ type:"DECK_DEL", id:deck.id })}>×</button>
+        </div>
+      </div>
+
+      {/* Completeness pills */}
+      <div className="deck-completeness">
+        {deck.combos.map((cb, i) => {
+          const ok = isComplete(cb);
+          return <span key={i} className="deck-pill" style={{
+            background: ok ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.03)",
+            borderColor: ok ? "#22c55e44" : "rgba(255,255,255,0.06)",
+            color: ok ? "#22c55e" : "#333",
+          }}>{ok ? `✓ C${i+1}` : `C${i+1}`}</span>;
+        })}
+        {deck.bonus.map((cb, i) => {
+          const ok = isComplete(cb);
+          return <span key={i} className="deck-pill" style={{
+            background: ok ? "rgba(168,85,247,0.1)" : "rgba(255,255,255,0.03)",
+            borderColor: ok ? "#a855f744" : "rgba(255,255,255,0.06)",
+            color: ok ? "#a855f7" : "#333",
+          }}>{ok ? `✓ B${i+1}` : `B${i+1}`}</span>;
+        })}
+      </div>
+
+      {/* Main combos */}
+      <div className="deck-section-label">Combo principali (3)</div>
+      <div className="deck-combos">
+        {deck.combos.map((cb, i) => (
+          <DeckSlot key={i} combo={cb} deckId={deck.id} slot="main" idx={i} dispatch={dispatch} />
+        ))}
+      </div>
+
+      {/* Bonus combos */}
+      <div className="deck-section-label" style={{ display:"flex", alignItems:"center" }}>
+        <span style={{ flex:1 }}>Combo bonus</span>
+      </div>
+      <div className="deck-bonus-controls">
+        <span className="deck-bonus-label">Numero combo bonus</span>
+        <button className="deck-count-btn" onClick={() => dispatch({ type:"DECK_BONUS_COUNT", id:deck.id, v:deck.bonusCount-1 })}>−</button>
+        <span className="deck-count-val">{deck.bonusCount}</span>
+        <button className="deck-count-btn" onClick={() => dispatch({ type:"DECK_BONUS_COUNT", id:deck.id, v:deck.bonusCount+1 })}>+</button>
+      </div>
+      <div className="deck-combos">
+        {deck.bonus.map((cb, i) => (
+          <DeckSlot key={i} combo={cb} deckId={deck.id} slot="bonus" idx={i} dispatch={dispatch} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DeckPage({ decks, dispatch }) {
+  return (
+    <div>
+      <div className="section-header">
+        <span className="section-title">I Tuoi Deck · {decks.length}</span>
+        <button className="add-btn" onClick={() => dispatch({ type:"DECK_ADD" })}>+ Nuovo Deck</button>
+      </div>
+      {decks.length === 0 && (
+        <div className="empty-msg" style={{ marginTop:30 }}>
+          <div style={{ fontSize:28, marginBottom:8 }}>🃏</div>
+          <div>Nessun deck ancora.</div>
+          <div style={{ fontSize:11, color:"#2a2a2a", marginTop:4 }}>Crea un deck per organizzare le tue combo da torneo.</div>
+        </div>
+      )}
+      {decks.map(dk => <DeckCard key={dk.id} deck={dk} dispatch={dispatch} />)}
+    </div>
+  );
+}
+
+
+
+// ── BACKUP PAGE ───────────────────────────────────────────────────────────
+const BACKUP_VERSION = 1;
+
+function BackupPage({ state, dispatch }) {
+  const [toast, setToast] = useState(null);
+  const fileInputRef = React.useRef(null);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const getBackupData = () => ({
+    _version: BACKUP_VERSION,
+    _app: "BeyTracker X",
+    _date: new Date().toISOString(),
+    myCombo:    state.myCombo,
+    opponents:  state.opponents,
+    nextId:     state.nextId,
+    decks:      state.decks,
+    nextDeckId: state.nextDeckId,
+  });
+
+  const handleExport = async () => {
+    const data = getBackupData();
+    const json = JSON.stringify(data, null, 2);
+    const dateStr = new Date().toISOString().slice(0,10);
+    const filename = `beytrackerx_backup_${dateStr}.json`;
+
+    // Try Web Share API with file (Android + iOS 15+)
+    if (navigator.canShare) {
+      const file = new File([json], filename, { type: "application/json" });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: "BeyTracker X Backup",
+            text: `Backup del ${dateStr}`,
+            files: [file],
+          });
+          showToast("✓ Condiviso!");
+          return;
+        } catch(e) {
+          if (e.name !== "AbortError") console.warn("Share failed:", e);
+          else return; // user cancelled
+        }
+      }
+    }
+    // Fallback: download
+    const blob = new Blob([json], { type: "application/json" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("✓ File scaricato!");
+  };
+
+  const handleImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data._app !== "BeyTracker X") throw new Error("File non valido");
+        dispatch({ type: "RESTORE", data });
+        showToast("✓ Backup ripristinato!");
+      } catch(err) {
+        showToast("✗ File non valido");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const handleReset = () => {
+    if (!confirm("Sei sicuro? Tutti i dati verranno cancellati.")) return;
+    dispatch({ type: "FACTORY_RESET" });
+    showToast("✓ Reset completato");
+  };
+
+  const totalMatches = state.opponents.reduce((s,o) => s + o.wins + o.losses + o.draws, 0);
+  const totalDecks   = state.decks.length;
+  const totalOpps    = state.opponents.length;
+
+  return (
+    <div className="backup-page">
+      {/* Stats snapshot */}
+      <div className="backup-card">
+        <div className="backup-card-title" style={{ color:"#00b4ff" }}>📊 Dati Salvati</div>
+        <div style={{ marginTop:8 }}>
+          {[
+            ["Avversari tracciati", totalOpps],
+            ["Match registrati",    totalMatches],
+            ["Deck creati",         totalDecks],
+            ["Ultimo salvataggio",  (() => { try { const s = localStorage.getItem("beytrackerx_v2"); return s ? new Date(JSON.parse(s)._savedAt||Date.now()).toLocaleString("it-IT",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "—"; } catch(_){ return "—"; } })()],
+          ].map(([l,v]) => (
+            <div key={l} className="backup-stat">
+              <span style={{ color:"#666" }}>{l}</span>
+              <span className="backup-stat-val">{v}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Export */}
+      <div className="backup-card">
+        <div className="backup-card-title" style={{ color:"#22c55e" }}>⬆ Esporta Backup</div>
+        <div className="backup-card-desc">
+          Salva tutti i tuoi dati in un file <strong style={{color:"#aaa"}}>.json</strong>.
+          Puoi condividerlo su <strong style={{color:"#aaa"}}>Telegram, WhatsApp, Mail, Google Drive, iCloud</strong> — qualsiasi app del tuo telefono.
+        </div>
+        <button className="backup-btn export" onClick={handleExport}>
+          📤 Esporta e Condividi
+        </button>
+      </div>
+
+      {/* Import */}
+      <div className="backup-card">
+        <div className="backup-card-title" style={{ color:"#a855f7" }}>⬇ Ripristina Backup</div>
+        <div className="backup-card-desc">
+          Seleziona un file <strong style={{color:"#aaa"}}>.json</strong> precedentemente esportato per ripristinare tutti i dati.<br/>
+          <span style={{color:"#ef4444", fontSize:10}}>⚠ I dati attuali verranno sostituiti.</span>
+        </div>
+        <button className="backup-btn import" onClick={() => fileInputRef.current.click()}>
+          📥 Seleziona File di Backup
+        </button>
+        <input
+          ref={fileInputRef}
+          className="file-input-hidden"
+          type="file"
+          accept=".json,application/json"
+          onChange={handleImport}
+        />
+      </div>
+
+      {/* Danger zone */}
+      <div className="backup-card" style={{ borderColor:"rgba(239,68,68,0.15)" }}>
+        <div className="backup-card-title" style={{ color:"#ef4444" }}>⚠ Zona Pericolosa</div>
+        <div className="backup-card-desc">
+          Cancella tutti i dati e ripristina l'app allo stato iniziale. Operazione irreversibile.
+        </div>
+        <button className="backup-btn danger" onClick={handleReset}>
+          🗑 Reset Completo
+        </button>
+      </div>
+
+      {toast && <div className="backup-toast">{toast}</div>}
+    </div>
+  );
+}
+
+// ── INSTALL PROMPT ────────────────────────────────────────────────────────
+function useInstallPrompt() {
+  const [prompt, setPrompt] = useState(null);
+  const [installed, setInstalled] = useState(false);
+  React.useEffect(() => {
+    const handler = e => { e.preventDefault(); setPrompt(e); };
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', () => setInstalled(true));
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+  const install = () => { if (prompt) { prompt.prompt(); prompt.userChoice.then(() => setPrompt(null)); } };
+  return { canInstall: !!prompt && !installed, install };
+}
+
+
+// ── DEVICE DETECTION ─────────────────────────────────────────────────────
+const BNAV_TABS = [
+  { v:"tracker", icon:"⚔", label:"Tracker" },
+  { v:"deck",    icon:"🃏", label:"Deck"    },
+  { v:"stats",   icon:"📊", label:"Stats"   },
+  { v:"bits",    icon:"🔩", label:"Bits"    },
+  { v:"backup",  icon:"💾", label:"Backup"  },
+];
+
+function useDevice() {
+  const [touch, setTouch] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches
+  );
+  React.useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const handler = e => setTouch(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return touch ? "touch" : "desktop";
+}
+
+// ── MAIN APP ──────────────────────────────────────────────────────────────
+function App() {
+  const [s, d] = useReducer(reducer, initState);
+  const [log, setLog] = useState(null);
+  const [fin, setFin] = useState(FINISH_TYPES[0]);
+  const [exp, setExp] = useState(null);
+  const { myCombo, opponents, view } = s;
+  const myOK = isComplete(myCombo);
+  const { canInstall, install } = useInstallPrompt();
+  const device = useDevice();
+  const isTouch = device === "touch";
+
+  const openLog = useCallback((oppId) => { setLog({ oppId }); setFin(FINISH_TYPES[0]); }, []);
+
+  const SIDEBAR_ICONS = {"tracker":"⚔","deck":"🃏","stats":"📊","bits":"🔩","backup":"💾"};
+
+  return (
+    <div className="app">
+      {/* Install Banner */}
+      {canInstall && (
+        <div onClick={install} style={{
+          background:"linear-gradient(90deg,rgba(0,180,255,0.12),rgba(168,85,247,0.1))",
+          borderBottom:"1px solid rgba(0,180,255,0.2)",
+          padding:"9px 15px", display:"flex", alignItems:"center", gap:10,
+          cursor:"pointer",
+        }}>
+          <div style={{width:28,height:28,borderRadius:8,background:"conic-gradient(from 0deg,#00b4ff,#a855f7,#f59e0b,#22c55e,#00b4ff)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>⚡</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:11,fontWeight:800,color:"#ddd"}}>Installa BeyTracker X</div>
+            <div style={{fontSize:10,color:"#555"}}>Aggiungi alla home screen per usarla offline</div>
+          </div>
+          <div style={{fontSize:10,fontWeight:700,color:"#00b4ff",background:"rgba(0,180,255,0.1)",border:"1px solid rgba(0,180,255,0.25)",borderRadius:5,padding:"4px 9px"}}>Installa</div>
+        </div>
+      )}
+      {/* Header */}
+      <div className="header">
+        <div className="flex-center">
+          <div className="logo-spin">⚡</div>
+          <div>
+            <div className="logo-text">BEY<span style={{ color:"#00b4ff" }}>TRACKER</span><span style={{ color:"#a855f7", fontSize:11 }}> X</span></div>
+            <div className="logo-badges">
+              {["BX","UX","CX"].map(sys => <span key={sys} className="sys-badge" style={{ color:SYS_COL[sys], borderColor:`${SYS_COL[sys]}44`, background:`${SYS_COL[sys]}14` }}>{sys}</span>)}
+            </div>
+          </div>
+        </div>
+        <div className="nav">
+          {["tracker","deck","stats","bits","backup"].map(v => (
+            <button key={v} className={`nav-btn ${view===v?"active":"inactive"}`} onClick={() => d({ type:"VIEW", v })}>{v}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop shell: sidebar + main */}
+      <div className="desktop-shell">
+
+        {/* Sidebar (desktop only via CSS) */}
+        <div className="sidebar">
+          <div className="sidebar-nav">
+            {["tracker","deck","stats","bits"].map(v => (
+              <button key={v} className={`sidebar-btn ${view===v?"active":"inactive"}`} onClick={() => d({ type:"VIEW", v })}>
+                <span className="sidebar-icon">{SIDEBAR_ICONS[v]}</span>{v}
+              </button>
+            ))}
+            <div className="sidebar-divider"/>
+            <button className={`sidebar-btn ${view==="backup"?"active":"inactive"}`} onClick={() => d({ type:"VIEW", v:"backup" })}>
+              <span className="sidebar-icon">💾</span>backup
+            </button>
+          </div>
+        </div>
+
+        {/* Main scrollable area */}
+        <div className="desktop-main">
+          <div className="content">
+        {/* My Combo — shown on touch for all non-deck/bits/backup views,
+             hidden on desktop when tracker is active (it's in the left col there) */}
+        {view !== "bits" && view !== "deck" && view !== "backup" && view !== "tracker" && (
+          <div className="my-combo-card">
+            <div className="card-header">
+              <div className="card-accent-bar" />
+              <span className="card-title">La Tua Combo</span>
+              {myOK && <span className="ready-badge">✓ Pronta</span>}
+            </div>
+            <ComboForm combo={myCombo} onChange={(f,v) => d({ type:"MY", f, v })} />
+            {myOK && (
+              <div className="combo-label">
+                <SysBadge sys={myCombo.system} />
+                {comboLabel(myCombo)}
+              </div>
+            )}
+          </div>
+        )}
+        {/* On touch, show my combo above tracker too */}
+        {view === "tracker" && isTouch && (
+          <div className="my-combo-card">
+            <div className="card-header">
+              <div className="card-accent-bar" />
+              <span className="card-title">La Tua Combo</span>
+              {myOK && <span className="ready-badge">✓ Pronta</span>}
+            </div>
+            <ComboForm combo={myCombo} onChange={(f,v) => d({ type:"MY", f, v })} />
+            {myOK && (
+              <div className="combo-label">
+                <SysBadge sys={myCombo.system} />
+                {comboLabel(myCombo)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tracker */}
+        {view === "tracker" && (
+          <div className="desktop-tracker-grid">
+            <div className="desktop-left-col">
+              {/* My Combo shown here on desktop inside grid */}
+              {!isTouch && view !== "bits" && view !== "deck" && view !== "backup" && (
+                <div className="my-combo-card">
+                  <div className="card-header">
+                    <div className="card-accent-bar" />
+                    <span className="card-title">La Tua Combo</span>
+                    {myOK && <span className="ready-badge">✓ Pronta</span>}
+                  </div>
+                  <ComboForm combo={myCombo} onChange={(f,v) => d({ type:"MY", f, v })} />
+                  {myOK && (
+                    <div className="combo-label">
+                      <SysBadge sys={myCombo.system} />
+                      {comboLabel(myCombo)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="desktop-right-col">
+            <div className="section-header">
+              <span className="section-title">Avversari · {opponents.length}</span>
+              <button className="add-btn" onClick={() => d({ type:"ADD" })}>+ Aggiungi</button>
+            </div>
+
+            {opponents.map((opp, idx) => {
+              const tot = opp.wins + opp.losses + opp.draws;
+              const wp  = tot > 0 ? Math.round(opp.wins / tot * 100) : null;
+              const ok  = isComplete(opp);
+              const isE = exp === opp.id;
+              const ac  = SYS_COL[opp.system] || "#888";
+              return (
+                <div key={opp.id} className="opp-card" style={{ border:`1px solid ${isE ? ac+"33" : "rgba(255,255,255,0.055)"}` }}>
+                  <div className="opp-body">
+                    <div className="opp-top">
+                      <span className="badge" style={{ color:ac, background:`${ac}14`, borderColor:`${ac}44`, fontWeight:800 }}>{idx<3?`M${idx+1}`:`#${idx+1}`} · {opp.system}</span>
+                      <div className="opp-label-name" style={{ color: ok?"#ccc":"#333" }}>
+                        {ok ? comboLabel(opp) : <span style={{ color:"#2a2a2a" }}>Non configurato</span>}
+                      </div>
+                      {idx < 3 && (
+                        <div className="preset-btns">
+                          {META_PRESETS.map((p,pi) => (
+                            <button key={pi} className="preset-btn" onClick={() => d({ type:"PRESET", id:opp.id, idx:pi })} title={p.label}>M{pi+1}</button>
+                          ))}
+                        </div>
+                      )}
+                      <button className="del-btn" onClick={() => d({ type:"DEL", id:opp.id })}>×</button>
+                    </div>
+
+                    <ComboForm combo={opp} onChange={(f,v) => d({ type:"OPP", id:opp.id, f, v })} accent={ac} />
+
+                    <div style={{ marginTop:8 }}>
+                      <WBar wins={opp.wins} losses={opp.losses} draws={opp.draws} />
+                      <div className="chips-row">
+                        <Chip label={`${opp.wins}W`} color="#22c55e" />
+                        <Chip label={`${opp.losses}L`} color="#ef4444" />
+                        <Chip label={`${opp.draws}P`} color="#f59e0b" />
+                        {wp !== null
+                          ? <span className="wp-display" style={{ color:wp>=50?"#22c55e":"#ef4444" }}>{wp}%</span>
+                          : <span style={{ marginLeft:"auto", fontSize:11, color:"#2a2a2a" }}>—</span>}
+                      </div>
+                    </div>
+
+                    <div className="opp-actions">
+                      <button
+                        className={`register-btn ${myOK&&ok?"enabled":"disabled"}`}
+                        disabled={!myOK || !ok}
+                        onClick={() => myOK && ok && openLog(opp.id)}
+                      >⚔ Registra</button>
+                      <button className="expand-btn" onClick={() => setExp(isE?null:opp.id)} style={{ color:isE?"#00b4ff":"#444" }}>{isE?"▲":"▼"}</button>
+                      {tot > 0 && <button className="reset-btn" onClick={() => d({ type:"RESET", id:opp.id })} title="Reset">↺</button>}
+                    </div>
+                  </div>
+
+                  {isE && (
+                    <div className="history-panel">
+                      <div className="history-title">Storico ({opp.history.length})</div>
+                      {opp.history.length === 0
+                        ? <div style={{ color:"#2a2a2a", fontSize:11 }}>Nessun match ancora.</div>
+                        : opp.history.slice(0, 8).map(h => (
+                          <div key={h.id} className="history-row">
+                            <ResultIcon result={h.result} />
+                            <span className="history-finish">{h.finish}</span>
+                            <span className="history-ts">{h.ts}</span>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            </div>{/* desktop-right-col */}
+          </div>
+        )}
+
+        {view === "deck"  && <DeckPage decks={s.decks} dispatch={d} />}
+        {view === "stats" && <StatsPage opponents={opponents} />}
+        {view === "bits"   && <BitsPage />}
+        {view === "backup" && <BackupPage state={s} dispatch={d} />}
+          </div>{/* content */}
+        </div>{/* desktop-main */}
+      </div>{/* desktop-shell */}
+
+      {/* Bottom nav (touch only via CSS) */}
+      <nav className="bottom-nav">
+        {BNAV_TABS.map(t => (
+          <button key={t.v} className={`bottom-nav-btn ${view===t.v?"active":"inactive"}`} onClick={() => d({ type:"VIEW", v:t.v })}>
+            <span className="bnav-icon">{t.icon}</span>
+            {t.label}
+          </button>
+        ))}
+      </nav>
+
+      {/* Log Modal */}
+      {log && (() => {
+        const opp = opponents.find(o => o.id === log.oppId);
+        if (!opp) return null;
+        const tot = opp.wins + opp.losses + opp.draws;
+        const lastResult = opp.history[0];
+        return (
+          <div className="modal-overlay" onClick={() => setLog(null)}>
+            <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+              <div className="modal-handle" />
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:3 }}>
+                <div className="modal-subtitle">Risultato contro</div>
+                <button onClick={() => setLog(null)} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", color:"#666", borderRadius:6, padding:"3px 10px", fontSize:11, cursor:"pointer", fontWeight:700 }}>Fine ✓</button>
+              </div>
+              <div className="modal-vs">{comboLabel(opp)}</div>
+              <div style={{ display:"flex", gap:8, marginBottom:11, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:8, padding:"7px 10px", alignItems:"center" }}>
+                <Chip label={`${opp.wins}W`} color="#22c55e" />
+                <Chip label={`${opp.losses}L`} color="#ef4444" />
+                <Chip label={`${opp.draws}P`} color="#f59e0b" />
+                <span style={{ color:"#3a3a3a", fontSize:10 }}>{tot} match</span>
+                {lastResult && <span style={{ marginLeft:"auto", fontSize:10, color:"#444" }}>Ultimo: <ResultIcon result={lastResult.result} /></span>}
+              </div>
+              <div className="modal-finish-label">Tipo di fine</div>
+              <div className="modal-finish-btns">
+                {FINISH_TYPES.map(f => (
+                  <button key={f} className="finish-btn" onClick={() => setFin(f)} style={{
+                    background: fin===f ? "rgba(0,180,255,0.12)" : "rgba(255,255,255,0.03)",
+                    borderColor: fin===f ? "#00b4ff44" : "rgba(255,255,255,0.06)",
+                    color: fin===f ? "#00b4ff" : "#555",
+                  }}>{f}</button>
+                ))}
+              </div>
+              <div className="result-btns">
+                {[["▲ WIN","win","#22c55e"],["= PARI","draw","#f59e0b"],["▼ LOSS","loss","#ef4444"]].map(([label,r,color]) => (
+                  <button key={r} className="result-btn" onClick={() => d({ type:"LOG", oppId:opp.id, r, finish:fin })}
+                    style={{ background:`${color}10`, borderColor:`${color}44`, color }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
