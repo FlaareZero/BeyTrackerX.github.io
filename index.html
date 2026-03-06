@@ -406,6 +406,9 @@ const BITS_DATA = [
   { name:"Operate",    type:"Balance", speed:5,stamina:6,defense:5,burst:6, notes:"Comportamento variabile in base all'angolo di lancio" },
   { name:"Glide",      type:"Balance", speed:4,stamina:6,defense:6,burst:7, notes:"Base rotonda, movimento bilanciato consistente" },
   { name:"Wall Ball",  type:"Balance", speed:4,stamina:5,defense:7,burst:5, notes:"Anello wall stabilizza la punta a forma di ball contro il pavimento dello stadio" },
+  { name:"Kick",       type:"Balance", speed:8,stamina:5,defense:3,burst:4, notes:"Un incrocio tra Hexa e Taper, una punta molto bilanciata che punta sull'aggressività e LAD alta" },
+  { name:"RubberAccel",type:"Attack",  speed:10,stamina:5,defense:2,burst:4, notes:"Punta bilanciata che unisce aggressività iniziale a stamina nella LAD" },
+  { name:"Unite",      type:"Balance", speed:9,stamina:7,defense:3,burst:4, notes:"Punta bilanciata,unione tra Taper, ball e point. Alta velocità, poco controllo e decente LAD, soprattutto con CX top-heavy "}
 ];
 const BITS_MAP = Object.fromEntries(BITS_DATA.map(b => [b.name, b]));
 const BIT_NAMES = BITS_DATA.map(b => b.name);
