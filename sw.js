@@ -1,9 +1,11 @@
-const CACHE = 'beytrackerx-v3';
+const CACHE = 'beytrackerx-v4';
 const ASSETS = [
   './',
   './index.html',
   './data.js',
   './icons.js',
+  './theme.css',
+  './layout.css',
   'https://unpkg.com/react@18/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
   'https://unpkg.com/@babel/standalone/babel.min.js'
