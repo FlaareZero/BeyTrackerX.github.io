@@ -149,7 +149,148 @@ function Sel({ val, onChange, opts, ph, accent }) {
   );
 }
 
-function ComboForm({ combo, onChange }) {
+/* ─── RADAR CHART ───────────────────────────────────────────── */
+function RadarChart({ stats, color, size }) {
+  size = size || 180;
+  if (!stats) return null;
+  const axes = [
+    {key:'attack', label:'ATK'},
+    {key:'stamina',label:'STA'},
+    {key:'defense',label:'DEF'},
+    {key:'burst',  label:'BST'},
+    {key:'speed',  label:'SPD'},
+  ];
+  const n=axes.length, cx=size/2, cy=size/2, r=size*0.34;
+  const angle = i => (Math.PI*2*i/n) - Math.PI/2;
+  const pt = (i,pct) => {
+    const a = angle(i);
+    return [cx + Math.cos(a)*r*pct, cy + Math.sin(a)*r*pct];
+  };
+  const col = color || '#00b4ff';
+  const dataPts = axes.map((ax,i) => pt(i, Math.max(0.04, (stats[ax.key]||0)/100)));
+  return (
+    <svg width={size} height={size} style={{overflow:'visible',display:'block',margin:'0 auto'}}>
+      {/* grid */}
+      {[0.25,0.5,0.75,1.0].map(lvl => (
+        <polygon key={lvl}
+          points={axes.map((_,i) => pt(i,lvl).join(',')).join(' ')}
+          fill="none" stroke="var(--border-card)" strokeWidth={lvl===1?1.5:1} opacity={lvl===1?0.5:0.3}/>
+      ))}
+      {/* axis lines */}
+      {axes.map((_,i) => { const [x,y]=pt(i,1); return (
+        <line key={i} x1={cx} y1={cy} x2={x} y2={y}
+          stroke="var(--border-card)" strokeWidth="1" opacity="0.4"/>
+      );})}
+      {/* data polygon */}
+      <polygon points={dataPts.map(p=>p.join(',')).join(' ')}
+        fill={`${col}2a`} stroke={col} strokeWidth="2" strokeLinejoin="round"/>
+      {/* dots */}
+      {dataPts.map(([x,y],i) => <circle key={i} cx={x} cy={y} r="3.5" fill={col}/>)}
+      {/* labels */}
+      {axes.map((ax,i) => {
+        const [x,y] = pt(i,1.30);
+        const val = stats[ax.key]||0;
+        return (
+          <g key={ax.key}>
+            <text x={x} y={y-1} textAnchor="middle" dominantBaseline="middle"
+              fontSize="9" fontWeight="700" fill="var(--text-dimmer)">{ax.label}</text>
+            <text x={x} y={y+11} textAnchor="middle" dominantBaseline="middle"
+              fontSize="11" fontWeight="900" fill={col}>{val}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ─── COMBO STATS CARD ──────────────────────────────────────── */
+function ComboStatsCard({ combo }) {
+  const stats = calcComboStats(combo);
+  if (!stats) return null;
+  const ac = SYS_COL[combo.system]||'#00b4ff';
+  const dominant = Object.entries({attack:stats.attack,defense:stats.defense,stamina:stats.stamina})
+    .sort((a,b)=>b[1]-a[1])[0][0];
+  const tCol = {attack:'#ef4444',defense:'#3b82f6',stamina:'#22c55e'}[dominant];
+  const tLbl = {attack:'Attacco',defense:'Difesa',stamina:'Stamina'}[dominant];
+  return (
+    <div style={{background:'var(--bg-card2)',border:`1px solid ${ac}33`,
+                 borderRadius:10,padding:'12px 8px 8px',marginTop:10}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+        <span style={{fontSize:10,fontWeight:800,textTransform:'uppercase',
+                      letterSpacing:'1px',color:'var(--text-dimmer)'}}>Statistiche Combo</span>
+        <span style={{marginLeft:'auto',fontSize:10,fontWeight:800,color:tCol,
+                      background:`${tCol}18`,border:`1px solid ${tCol}44`,
+                      borderRadius:4,padding:'1px 7px'}}>{tLbl}</span>
+      </div>
+      <RadarChart stats={stats} color={ac} size={160}/>
+    </div>
+  );
+}
+
+/* ─── META PRESETS PANEL ────────────────────────────────────── */
+function MetaPresetsPanel({ onApply }) {
+  const [roleFilter, setRoleFilter] = useState("All");
+  const [sysFilter,  setSysFilter]  = useState("All");
+  const roles = ["All","Attack","Stamina","Defense","Spin-Eq","Balance"];
+  const syss  = ["All","BX","UX","CX"];
+  const filtered = META_PRESETS.filter(p =>
+    (roleFilter==="All"||p.role===roleFilter) &&
+    (sysFilter==="All"||p.system===sysFilter)
+  );
+  return (
+    <div style={{marginTop:14}}>
+      <div className="section-header" style={{marginBottom:8}}>
+        <span className="section-title">Meta Presets · WBO 2025</span>
+      </div>
+      <div style={{display:'flex',gap:3,flexWrap:'wrap',marginBottom:8}}>
+        {roles.map(r => (
+          <button key={r} onClick={()=>setRoleFilter(r)} style={{
+            background: roleFilter===r?`${ROLE_COL[r]||'#00b4ff'}20`:'var(--bg-btn-ghost)',
+            border:`1px solid ${roleFilter===r?(ROLE_COL[r]||'#00b4ff'):'var(--border-btn)'}`,
+            color: roleFilter===r?(ROLE_COL[r]||'#00b4ff'):'var(--text-dimmer)',
+            borderRadius:5,padding:'3px 8px',fontSize:10,fontWeight:700,cursor:'pointer',
+          }}>{r}</button>
+        ))}
+        {syss.map(sy => (
+          <button key={sy} onClick={()=>setSysFilter(sy)} style={{
+            background: sysFilter===sy?`${SYS_COL[sy]||'#00b4ff'}20`:'var(--bg-btn-ghost)',
+            border:`1px solid ${sysFilter===sy?(SYS_COL[sy]||'var(--border-btn)'):'var(--border-btn)'}`,
+            color: sysFilter===sy?(SYS_COL[sy]||'#00b4ff'):'var(--text-dimmer)',
+            borderRadius:5,padding:'3px 8px',fontSize:10,fontWeight:700,cursor:'pointer',
+          }}>{sy}</button>
+        ))}
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:3}}>
+        {filtered.map(p => (
+          <div key={p.label}
+            style={{display:'flex',alignItems:'center',gap:6,padding:'7px 10px',
+                    background:'var(--bg-card)',border:'1px solid var(--border-card)',
+                    borderRadius:8,cursor:'pointer'}}
+            onClick={()=>onApply(p)}>
+            <span style={{fontSize:9,fontWeight:800,minWidth:14,textAlign:'center',
+              color:TIER_COL[p.tier],background:`${TIER_COL[p.tier]}18`,
+              border:`1px solid ${TIER_COL[p.tier]}44`,borderRadius:3,padding:'1px 4px'}}>{p.tier}</span>
+            <span style={{fontSize:9,fontWeight:700,minWidth:50,textAlign:'center',
+              color:ROLE_COL[p.role]||'#888',background:`${ROLE_COL[p.role]||'#888'}11`,
+              border:`1px solid ${ROLE_COL[p.role]||'#888'}33`,borderRadius:3,padding:'1px 4px'}}>{p.role}</span>
+            <span style={{fontSize:9,fontWeight:700,color:SYS_COL[p.system],
+              background:`${SYS_COL[p.system]}18`,border:`1px solid ${SYS_COL[p.system]}44`,
+              borderRadius:3,padding:'1px 5px'}}>{p.system}</span>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:11,fontWeight:800,color:'var(--text-card)',
+                           overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.label}</div>
+              {p.note && <div style={{fontSize:9,color:'var(--text-ultra)',marginTop:1}}>{p.note}</div>}
+            </div>
+            <span style={{fontSize:12,color:'var(--text-ghost)',flexShrink:0}}>→</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── COMBO FORM ────────────────────────────────────────────── */
+function ComboForm({ combo, onChange, showStats, showPresets, onPresetApply }) {
   const ac     = SYS_COL[combo.system];
   const blades = combo.system==="UX" ? UX_BLADES : combo.system==="CX" ? CX_BLADES : BX_BLADES;
   return (
@@ -169,6 +310,8 @@ function ComboForm({ combo, onChange }) {
         <Sel val={combo.ratchet} onChange={v => onChange("ratchet",v)} opts={RATCHETS} ph="Ratchet" accent={ac}/>
       </div>
       <Sel val={combo.bit} onChange={v => onChange("bit",v)} opts={BIT_NAMES} ph="Bit" accent={ac}/>
+      {showStats && <ComboStatsCard combo={combo}/>}
+      {showPresets && onPresetApply && <MetaPresetsPanel onApply={onPresetApply}/>}
     </div>
   );
 }
@@ -478,6 +621,17 @@ function App() {
   const toggleTheme = () => setTheme(p => p==='dark' ? 'light' : 'dark');
   const logOpp = logOppId ? (s.opponents||[]).find(o => o.id===logOppId) : null;
 
+  // Applica un preset meta alla "tua combo"
+  const applyPreset = (p) => {
+    d({type:"MY",f:"system",  v:p.system});
+    d({type:"MY",f:"blade",   v:p.blade});
+    d({type:"MY",f:"ratchet", v:p.ratchet});
+    d({type:"MY",f:"bit",     v:p.bit});
+    d({type:"MY",f:"lockChip",   v:""});
+    d({type:"MY",f:"mainBlade",  v:""});
+    d({type:"MY",f:"assistBlade",v:""});
+  };
+
   return (
     <div className="app">
 
@@ -521,7 +675,10 @@ function App() {
                     <span className="card-title">La Tua Combo</span>
                     {isComplete(s.myCombo) && <span className="ready-badge">✓ Pronta</span>}
                   </div>
-                  <ComboForm combo={s.myCombo} onChange={(f,v) => d({type:"MY",f,v})}/>
+                  <ComboForm combo={s.myCombo} onChange={(f,v) => d({type:"MY",f,v})}
+                    showStats={isComplete(s.myCombo)}
+                    showPresets={true}
+                    onPresetApply={applyPreset}/>
                 </div>
                 <div className="section-header">
                   <span className="section-title">Avversari</span>
