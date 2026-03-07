@@ -103,6 +103,13 @@ function reducer(s, a) {
       next = { ...s, opponents: s.opponents.map(o => o.id===a.id ? { ...o, [a.f]:a.v } : o) }; break;
     case "ADD_OPP":
       next = { ...s, opponents: [...s.opponents, makeOpp(s.nextId)], nextId:s.nextId+1 }; break;
+    case "ADD_OPP_META": {
+      // a.preset = { system, blade, ratchet, bit }
+      const p = a.preset;
+      const newOpp = { ...makeOpp(s.nextId), system:p.system, blade:p.blade, ratchet:p.ratchet, bit:p.bit };
+      next = { ...s, opponents: [...s.opponents, newOpp], nextId:s.nextId+1 };
+      break;
+    }
     case "DEL_OPP":
       next = { ...s, opponents: s.opponents.filter(o => o.id !== a.id) }; break;
     case "LOG": {
@@ -569,14 +576,34 @@ function DeckView({ decks, dispatch }) {
           <div className="deck-combos">
             {deck.slots.map((slot, idx) => {
               const complete = isComplete(slot);
+              const stats = complete ? calcComboStats(slot) : null;
+              const ac = SYS_COL[slot.system] || '#00b4ff';
               return (
                 <div key={idx} className="deck-combo-slot">
                   <div className="deck-combo-slot-header">
                     <span className="deck-slot-num">{idx+1}</span>
                     <span className="deck-slot-label">{complete ? comboLabel(slot) : "—"}</span>
-                    {complete && <span className="chip" style={{borderColor:SYS_COL[slot.system],color:SYS_COL[slot.system],background:`${SYS_COL[slot.system]}18`}}>{slot.system}</span>}
+                    {complete && <span className="chip" style={{borderColor:ac,color:ac,background:`${ac}18`}}>{slot.system}</span>}
                   </div>
                   <ComboForm combo={slot} onChange={(f,v) => dispatch({type:"DECK_SLOT",id:deck.id,idx,f,v})}/>
+                  {stats && (
+                    <div style={{background:'var(--bg-card2)',border:`1px solid ${ac}2a`,
+                                 borderRadius:8,padding:'10px 6px 6px',marginTop:8}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+                        <span style={{fontSize:9,fontWeight:800,textTransform:'uppercase',
+                                      letterSpacing:'1px',color:'var(--text-dimmer)'}}>Radar</span>
+                        {/* mini stat chips */}
+                        {[['ATK',stats.attack,'#ef4444'],['STA',stats.stamina,'#22c55e'],
+                          ['DEF',stats.defense,'#3b82f6'],['BST',stats.burst,'#f59e0b'],
+                          ['SPD',stats.speed,'#a855f7']].map(([lbl,val,col])=>(
+                          <span key={lbl} style={{fontSize:9,fontWeight:800,color:col,
+                            background:`${col}14`,border:`1px solid ${col}33`,
+                            borderRadius:4,padding:'1px 5px'}}>{lbl} {val}</span>
+                        ))}
+                      </div>
+                      <RadarChart stats={stats} color={ac} size={150}/>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -600,6 +627,82 @@ function DeckView({ decks, dispatch }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ─── META OPP PICKER ───────────────────────────────────────── */
+function MetaOppPicker({ onAdd }) {
+  const [open,       setOpen]       = useState(false);
+  const [roleFilter, setRoleFilter] = useState("All");
+  const [sysFilter,  setSysFilter]  = useState("All");
+  const roles = ["All","Attack","Stamina","Defense","Spin-Eq","Balance"];
+  const syss  = ["All","BX","UX","CX"];
+  const filtered = META_PRESETS.filter(p =>
+    (roleFilter==="All"||p.role===roleFilter) &&
+    (sysFilter==="All"||p.system===sysFilter)
+  );
+  return (
+    <div style={{marginBottom:6}}>
+      <button onClick={()=>setOpen(o=>!o)} style={{
+        width:'100%', padding:'8px 12px', borderRadius:8, cursor:'pointer',
+        background:'var(--bg-card)', border:'1px solid var(--border-card)',
+        color:'var(--text-secondary)', fontSize:11, fontWeight:700,
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+      }}>
+        <span>⚡ Aggiungi avversario meta</span>
+        <span style={{fontSize:14,color:'var(--text-ghost)'}}>{open?'▲':'▼'}</span>
+      </button>
+      {open && (
+        <div style={{border:'1px solid var(--border-card)',borderTop:'none',
+                     borderRadius:'0 0 8px 8px',padding:'10px 8px',
+                     background:'var(--bg-card2)'}}>
+          <div style={{display:'flex',gap:3,flexWrap:'wrap',marginBottom:8}}>
+            {roles.map(r=>(
+              <button key={r} onClick={()=>setRoleFilter(r)} style={{
+                background:roleFilter===r?`${ROLE_COL[r]||'#00b4ff'}20`:'var(--bg-btn-ghost)',
+                border:`1px solid ${roleFilter===r?(ROLE_COL[r]||'#00b4ff'):'var(--border-btn)'}`,
+                color:roleFilter===r?(ROLE_COL[r]||'#00b4ff'):'var(--text-dimmer)',
+                borderRadius:5,padding:'2px 7px',fontSize:9,fontWeight:700,cursor:'pointer',
+              }}>{r}</button>
+            ))}
+            {syss.map(sy=>(
+              <button key={sy} onClick={()=>setSysFilter(sy)} style={{
+                background:sysFilter===sy?`${SYS_COL[sy]||'#00b4ff'}20`:'var(--bg-btn-ghost)',
+                border:`1px solid ${sysFilter===sy?(SYS_COL[sy]||'var(--border-btn)'):'var(--border-btn)'}`,
+                color:sysFilter===sy?(SYS_COL[sy]||'#00b4ff'):'var(--text-dimmer)',
+                borderRadius:5,padding:'2px 7px',fontSize:9,fontWeight:700,cursor:'pointer',
+              }}>{sy}</button>
+            ))}
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:3,maxHeight:240,overflowY:'auto'}}>
+            {filtered.map(p=>(
+              <div key={p.label}
+                style={{display:'flex',alignItems:'center',gap:6,padding:'6px 8px',
+                        background:'var(--bg-card)',border:'1px solid var(--border-card)',
+                        borderRadius:7,cursor:'pointer'}}
+                onClick={()=>{ onAdd(p); setOpen(false); }}>
+                <span style={{fontSize:9,fontWeight:800,color:TIER_COL[p.tier],
+                  background:`${TIER_COL[p.tier]}18`,border:`1px solid ${TIER_COL[p.tier]}44`,
+                  borderRadius:3,padding:'1px 4px'}}>{p.tier}</span>
+                <span style={{fontSize:9,fontWeight:700,minWidth:48,textAlign:'center',
+                  color:ROLE_COL[p.role]||'#888',background:`${ROLE_COL[p.role]||'#888'}11`,
+                  border:`1px solid ${ROLE_COL[p.role]||'#888'}33`,
+                  borderRadius:3,padding:'1px 4px'}}>{p.role}</span>
+                <span style={{fontSize:9,fontWeight:700,color:SYS_COL[p.system],
+                  background:`${SYS_COL[p.system]}18`,border:`1px solid ${SYS_COL[p.system]}44`,
+                  borderRadius:3,padding:'1px 5px'}}>{p.system}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:11,fontWeight:800,color:'var(--text-card)',
+                    overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.label}</div>
+                  {p.note&&<div style={{fontSize:9,color:'var(--text-ultra)',marginTop:1}}>{p.note}</div>}
+                </div>
+                <span style={{fontSize:12,color:'#22c55e',flexShrink:0,fontWeight:800}}>+</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -682,8 +785,9 @@ function App() {
                 </div>
                 <div className="section-header">
                   <span className="section-title">Avversari</span>
-                  <button className="add-btn" onClick={() => d({type:"ADD_OPP"})}>+ Aggiungi</button>
+                  <button className="add-btn" onClick={() => d({type:"ADD_OPP"})}>+ Vuoto</button>
                 </div>
+                <MetaOppPicker onAdd={p => d({type:"ADD_OPP_META", preset:p})}/>
                 {(s.opponents||[]).map(opp => (
                   <div key={opp.id} className="opp-card" style={{border:'1px solid var(--border-card2)'}}>
                     <div className="opp-body">
