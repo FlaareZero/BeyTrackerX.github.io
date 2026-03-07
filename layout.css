@@ -55,6 +55,19 @@ select        { display: block; }
 .nav-btn.active   { background: rgba(0,180,255,0.1); border: 1px solid #00b4ff55; color: #00b4ff; }
 .nav-btn.inactive { background: transparent; border: 1px solid var(--border-btn); color: var(--text-dim); }
 
+/* ── THEME TOGGLE ────────────────────────────────────────────── */
+.theme-toggle-btn {
+  background: var(--bg-btn-ghost);
+  border: 1px solid var(--border-btn);
+  border-radius: 7px;
+  padding: 5px 9px;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
 /* ── MY COMBO CARD ───────────────────────────────────────────── */
 .my-combo-card  { background: linear-gradient(135deg, rgba(0,180,255,0.07), rgba(168,85,247,0.04)); border: 1px solid rgba(0,180,255,0.2); border-radius: 12px; padding: 12px 13px; margin-bottom: 13px; }
 .card-header    { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
@@ -237,6 +250,11 @@ select        { display: block; }
   .expand-btn:hover      { background: rgba(0,180,255,0.08); }
   .nav-btn:hover         { background: var(--bg-btn-ghost); color: var(--text-muted); }
 
+  /* Hide nav tabs on desktop (sidebar handles navigation) */
+  .nav { display: none !important; }
+
+  .theme-toggle-btn:hover { background: var(--bg-btn-ghost2); border-color: var(--border-select); }
+
   /* Bits: 2 columns */
   .bits-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
@@ -333,7 +351,10 @@ select        { display: block; }
   .bottom-nav-btn.active .bnav-icon    { filter: drop-shadow(0 0 6px #00b4ff88); }
 
   /* Hide top nav on touch */
-  .nav { display: none; }
+  .nav { display: none !important; }
+
+  /* Ensure theme toggle is comfortably tappable */
+  .theme-toggle-btn { min-width: 44px; min-height: 44px; font-size: 20px; padding: 8px 10px; }
 
   /* Extra scroll padding for bottom nav */
   .content { padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
