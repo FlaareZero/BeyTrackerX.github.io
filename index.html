@@ -18,7 +18,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="BeyTracker X"/>
 
-<!-- Built with build.py — file standalone, nessuna dipendenza esterna tranne React/Babel CDN -->
 <!-- Manifest inline via JS blob (single-file PWA) -->
 <script>
 (function(){
@@ -49,7 +48,7 @@
 <script>
 if ('serviceWorker' in navigator) {
   const SW_CODE = `
-const CACHE = 'beytrackerx-v1';
+const CACHE = 'beytrackerx-v3';
 const ASSETS = [
   'https://unpkg.com/react@18/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
@@ -601,8 +600,9 @@ select        { display: block; }
   .bottom-nav-btn.inactive             { color: var(--text-ghost); }
   .bottom-nav-btn.active .bnav-icon    { filter: drop-shadow(0 0 6px #00b4ff88); }
 
-  /* Hide top nav on touch */
-  .nav { display: none; }
+  /* Hide top nav and header theme btn on touch — bottom bar handles both */
+  .nav              { display: none; }
+  .theme-btn-header { display: none !important; }
 
   /* Extra scroll padding for bottom nav */
   .content { padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
@@ -1619,7 +1619,7 @@ function App() {
           </div>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-          <button onClick={toggleTheme} title={theme === "dark" ? "Passa al tema chiaro" : "Passa al tema scuro"} style={{
+          <button className="theme-btn-header" onClick={toggleTheme} title={theme === "dark" ? "Passa al tema chiaro" : "Passa al tema scuro"} style={{
             background: "var(--bg-btn-ghost)", border: "1px solid var(--border-btn)",
             borderRadius:6, width:30, height:30, display:"flex", alignItems:"center",
             justifyContent:"center", cursor:"pointer", fontSize:14, flexShrink:0,
@@ -1810,6 +1810,10 @@ function App() {
             {t.label}
           </button>
         ))}
+        <button className="bottom-nav-btn inactive theme-btn-bnav" onClick={toggleTheme}>
+          <span className="bnav-icon">{THEME_ICONS[theme]}</span>
+          Tema
+        </button>
       </nav>
 
       {/* Log Modal */}
