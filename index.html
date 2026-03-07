@@ -753,36 +753,6 @@ const TYPE_COL = { Attack:"#ef4444", Stamina:"#22c55e", Defense:"#3b82f6", Balan
 const STAT_BARS = [["VEL","speed","#ef4444"],["STA","stamina","#22c55e"],["DIF","defense","#3b82f6"],["BST","burst","#f59e0b"]];
 
 </script>
-<script id="icons-js">
-// ════════════════════════════════════════════════════════════════
-// BeyTracker X — Icons & UI Constants
-// Solo costanti JS pure (no JSX). ResultIcon è in BeyTrackerX.html
-// perché richiede Babel per il JSX.
-// ════════════════════════════════════════════════════════════════
-
-// ── NAVIGATION TABS ──────────────────────────────────────────
-const BNAV_TABS = [
-  { v: "tracker", icon: "⚔",  label: "Tracker" },
-  { v: "deck",    icon: "🃏", label: "Deck"    },
-  { v: "stats",   icon: "📊", label: "Stats"   },
-  { v: "bits",    icon: "🔩", label: "Bits"    },
-  { v: "backup",  icon: "💾", label: "Backup"  },
-];
-
-// ── SIDEBAR ICONS (desktop) ───────────────────────────────────
-const SIDEBAR_ICONS = {
-  tracker: "⚔",
-  deck:    "🃏",
-  stats:   "📊",
-  bits:    "🔩",
-  backup:  "💾",
-};
-
-// ── THEME TOGGLE ─────────────────────────────────────────────
-const THEME_ICONS  = { dark: "☀️", light: "🌙" };
-const THEME_LABELS = { dark: "tema chiaro", light: "tema scuro" };
-
-</script>
 <script type="text/babel">
 // ┌─────────────────────────────────────────────────────────────┐
 // │  BeyTracker X  —  indice sezioni                            │
@@ -1506,7 +1476,16 @@ function useInstallPrompt() {
 // ════════════════════════════════════════════════════════════════
 // ▸ DEVICE  —  useDevice, BNAV_TABS
 // ════════════════════════════════════════════════════════════════
-// BNAV_TABS, SIDEBAR_ICONS, THEME_ICONS, THEME_LABELS → icons.js (JS puro)
+const BNAV_TABS = [
+  { v:"tracker", icon:"⚔",  label:"Tracker" },
+  { v:"deck",    icon:"🃏", label:"Deck"    },
+  { v:"stats",   icon:"📊", label:"Stats"   },
+  { v:"bits",    icon:"🔩", label:"Bits"    },
+  { v:"backup",  icon:"💾", label:"Backup"  },
+];
+const SIDEBAR_ICONS = { tracker:"⚔", deck:"🃏", stats:"📊", bits:"🔩", backup:"💾" };
+const THEME_ICONS   = { dark:"☀️", light:"🌙" };
+const THEME_LABELS  = { dark:"tema chiaro", light:"tema scuro" };
 
 function useDevice() {
   const [touch, setTouch] = useState(() =>
