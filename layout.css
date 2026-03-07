@@ -161,6 +161,7 @@ select        { display: block; }
 .badge      { font-size: 9px; font-weight: 700; border-radius: 3px; padding: 1px 5px; border: 1px solid; }
 .flex-center{ display: flex; align-items: center; gap: 9px; }
 .empty-msg  { color: var(--text-ghost); text-align: center; padding: 30px; font-size: 13px; }
+.back-btn   { background: var(--bg-btn-ghost); border: 1px solid var(--border-btn); color: var(--text-secondary); border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; margin-bottom: 4px; }
 
 /* ── MODAL ───────────────────────────────────────────────────── */
 .modal-overlay     { position: fixed; inset: 0; background: var(--bg-overlay); display: flex; align-items: flex-end; justify-content: center; z-index: 200; backdrop-filter: blur(10px); }
