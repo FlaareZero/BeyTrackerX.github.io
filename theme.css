@@ -1,0 +1,169 @@
+/* ════════════════════════════════════════════════════════════════
+   BeyTracker X — Theme
+   Variabili CSS per dark/light mode + animazioni globali.
+   Per cambiare un colore basta modificare questo file.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── DARK (default) ──────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg-base:       #090a0e;
+  --bg-surface:    #0f1016;
+  --bg-card:       rgba(255,255,255,0.02);
+  --bg-card2:      rgba(255,255,255,0.025);
+  --bg-header:     rgba(0,0,0,0.35);
+  --bg-modal:      #0f1016;
+  --bg-sidebar:    rgba(0,0,0,0.4);
+  --bg-bottom:     rgba(9,10,14,0.97);
+  --bg-overlay:    rgba(0,0,0,0.9);
+  --bg-input:      transparent;
+  --bg-select:     rgba(255,255,255,0.03);
+  --bg-btn-ghost:  rgba(255,255,255,0.03);
+  --bg-btn-ghost2: rgba(255,255,255,0.02);
+  --bg-bar:        rgba(255,255,255,0.04);
+  --bg-bar2:       rgba(255,255,255,0.05);
+
+  /* Borders */
+  --border-subtle:  rgba(255,255,255,0.05);
+  --border-card:    rgba(255,255,255,0.055);
+  --border-card2:   rgba(255,255,255,0.06);
+  --border-card3:   rgba(255,255,255,0.04);
+  --border-card4:   rgba(255,255,255,0.08);
+  --border-select:  rgba(255,255,255,0.08);
+  --border-btn:     rgba(255,255,255,0.07);
+  --border-btn2:    rgba(255,255,255,0.06);
+  --border-divider: rgba(255,255,255,0.05);
+
+  /* Text — WCAG AA: min 4.5:1 su bg scuro */
+  --text-primary:   #e8e8f0;
+  --text-secondary: #a8a8b8;
+  --text-muted:     #8a8a9a;
+  --text-dim:       #7a7a8c;
+  --text-dimmer:    #6e6e80;
+  --text-dimmest:   #646476;
+  --text-ghost:     #5a5a6c;
+  --text-ultra:     #505062;
+  --text-card:      #d4d4e0;
+  --text-ddd:       #c8c8d8;
+  --text-aaa:       #9898a8;
+  --text-modal-sub: #7a7a8c;
+
+  /* Scrollbar */
+  --scrollbar-thumb:   #1a1a1a;
+  --scrollbar-thumb-d: #222;
+  --scrollbar-thumb-h: #333;
+
+  /* Accents — invarianti tra i temi */
+  --accent-bx:   #00b4ff;
+  --accent-ux:   #a855f7;
+  --accent-cx:   #f59e0b;
+  --accent-win:  #22c55e;
+  --accent-loss: #ef4444;
+  --accent-draw: #f59e0b;
+
+  /* App background gradient */
+  --app-gradient: radial-gradient(ellipse 90% 40% at 50% -5%, rgba(0,180,255,0.07), transparent);
+}
+
+/* ── LIGHT ───────────────────────────────────────────────────── */
+:root.light,
+:root[data-theme="light"] {
+  --bg-base:       #f0f2f7;
+  --bg-surface:    #ffffff;
+  --bg-card:       rgba(0,0,0,0.03);
+  --bg-card2:      rgba(0,0,0,0.04);
+  --bg-header:     rgba(240,242,247,0.85);
+  --bg-modal:      #ffffff;
+  --bg-sidebar:    rgba(230,233,240,0.9);
+  --bg-bottom:     rgba(240,242,247,0.97);
+  --bg-overlay:    rgba(0,0,0,0.6);
+  --bg-input:      transparent;
+  --bg-select:     rgba(0,0,0,0.03);
+  --bg-btn-ghost:  rgba(0,0,0,0.04);
+  --bg-btn-ghost2: rgba(0,0,0,0.03);
+  --bg-bar:        rgba(0,0,0,0.06);
+  --bg-bar2:       rgba(0,0,0,0.07);
+
+  --border-subtle:  rgba(0,0,0,0.08);
+  --border-card:    rgba(0,0,0,0.09);
+  --border-card2:   rgba(0,0,0,0.08);
+  --border-card3:   rgba(0,0,0,0.06);
+  --border-card4:   rgba(0,0,0,0.1);
+  --border-select:  rgba(0,0,0,0.12);
+  --border-btn:     rgba(0,0,0,0.1);
+  --border-btn2:    rgba(0,0,0,0.08);
+  --border-divider: rgba(0,0,0,0.08);
+
+  --text-primary:   #1a1b1f;
+  --text-secondary: #444455;
+  --text-muted:     #55556a;
+  --text-dim:       #55556a;
+  --text-dimmer:    #55556a;
+  --text-dimmest:   #60607a;
+  --text-ghost:     #70708a;
+  --text-ultra:     #80809a;
+  --text-card:      #2a2a3a;
+  --text-ddd:       #333344;
+  --text-aaa:       #505065;
+  --text-modal-sub: #55556a;
+
+  --scrollbar-thumb:   #ccc;
+  --scrollbar-thumb-d: #bbb;
+  --scrollbar-thumb-h: #aaa;
+
+  --app-gradient: radial-gradient(ellipse 90% 40% at 50% -5%, rgba(0,180,255,0.05), transparent);
+}
+
+/* ── SYSTEM LIGHT (senza override manuale) ───────────────────── */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg-base:       #f0f2f7;
+    --bg-surface:    #ffffff;
+    --bg-card:       rgba(0,0,0,0.03);
+    --bg-card2:      rgba(0,0,0,0.04);
+    --bg-header:     rgba(240,242,247,0.85);
+    --bg-modal:      #ffffff;
+    --bg-sidebar:    rgba(230,233,240,0.9);
+    --bg-bottom:     rgba(240,242,247,0.97);
+    --bg-overlay:    rgba(0,0,0,0.6);
+    --bg-select:     rgba(0,0,0,0.03);
+    --bg-btn-ghost:  rgba(0,0,0,0.04);
+    --bg-btn-ghost2: rgba(0,0,0,0.03);
+    --bg-bar:        rgba(0,0,0,0.06);
+    --bg-bar2:       rgba(0,0,0,0.07);
+
+    --border-subtle:  rgba(0,0,0,0.08);
+    --border-card:    rgba(0,0,0,0.09);
+    --border-card2:   rgba(0,0,0,0.08);
+    --border-card3:   rgba(0,0,0,0.06);
+    --border-card4:   rgba(0,0,0,0.1);
+    --border-select:  rgba(0,0,0,0.12);
+    --border-btn:     rgba(0,0,0,0.1);
+    --border-btn2:    rgba(0,0,0,0.08);
+    --border-divider: rgba(0,0,0,0.08);
+
+    --text-primary:   #1a1b1f;
+    --text-secondary: #444455;
+    --text-muted:     #55556a;
+    --text-dim:       #55556a;
+    --text-dimmer:    #55556a;
+    --text-dimmest:   #60607a;
+    --text-ghost:     #70708a;
+    --text-ultra:     #80809a;
+    --text-card:      #2a2a3a;
+    --text-ddd:       #333344;
+    --text-aaa:       #505065;
+    --text-modal-sub: #55556a;
+
+    --scrollbar-thumb:   #ccc;
+    --scrollbar-thumb-d: #bbb;
+    --scrollbar-thumb-h: #aaa;
+
+    --app-gradient: radial-gradient(ellipse 90% 40% at 50% -5%, rgba(0,180,255,0.05), transparent);
+  }
+}
+
+/* ── ANIMAZIONI ──────────────────────────────────────────────── */
+@keyframes spin    { to { transform: rotate(360deg); } }
+@keyframes fadeIn  { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
