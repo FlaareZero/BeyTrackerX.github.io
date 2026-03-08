@@ -42,16 +42,6 @@
 <script type="text/babel">
 const { useState, useReducer, useEffect, useCallback, useMemo } = React;
 
-// Sovrascrive BNAV_TABS di icons.js aggiungendo il tab BattlePass
-var BNAV_TABS = [
-  { v: "tracker", icon: "⚔",  label: "Tracker" },
-  { v: "deck",    icon: "🃏", label: "Deck"    },
-  { v: "stats",   icon: "📊", label: "Stats"   },
-  { v: "bits",    icon: "🔩", label: "Bits"    },
-  { v: "bp",      icon: "📡", label: "Pass"    },
-  { v: "backup",  icon: "💾", label: "Backup"  },
-];
-
 /* ─── HELPERS ───────────────────────────────────────────────── */
 const comboLabel = c => {
   if (!c) return "—";
