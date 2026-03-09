@@ -106,29 +106,23 @@ const BIT_TYPES = ["All", "Attack", "Stamina", "Defense", "Balance"];
 
 // ── META PRESET ───────────────────────────────────────────────
 const META_PRESETS = [
-  // ── WC2025 + WBO top picks ──────────────────────────────────
+  // ──Meta Picks: ──────────────────────────────────
   // Stamina
   { label:"Wizard Rod 9-60 Ball",         system:"UX", blade:"Wizard Rod",     ratchet:"9-60", bit:"Ball",      role:"Stamina",  tier:"S", note:"Benchmark stamina WC2025" },
   { label:"Wizard Rod 1-60 Hexa",         system:"UX", blade:"Wizard Rod",     ratchet:"1-60", bit:"Hexa",      role:"Stamina",  tier:"A", note:"Leobardo #1 WC2025" },
-  { label:"Wizard Rod 5-70 Disk Ball",    system:"UX", blade:"Wizard Rod",     ratchet:"5-70", bit:"Disk Ball", role:"Stamina",  tier:"A", note:"Alta LAD, stabile" },
   { label:"Silver Wolf 9-60 Free Ball",   system:"UX", blade:"Silver Wolf",    ratchet:"9-60", bit:"Free Ball", role:"Stamina",  tier:"A", note:"Ibrido stamina/difesa" },
-  { label:"Clock Mirage 3-60 Low Orb",    system:"UX", blade:"Clock Mirage",   ratchet:"3-60", bit:"Low Orb",   role:"Stamina",  tier:"B", note:"Build bassa, ottima LAD" },
+  { label:"Clock Mirage 4-55 Low Orb",    system:"UX", blade:"Clock Mirage",   ratchet:"4-55", bit:"Low Orb",   role:"Stamina",  tier:"B", note:"Build bassa, ottima LAD" },
   // Attack
   { label:"Aero Pegasus 3-60 Low Rush",   system:"UX", blade:"Aero Pegasus",   ratchet:"3-60", bit:"Low Rush",  role:"Attack",   tier:"S", note:"Leobardo #3 WC2025" },
   { label:"Aero Pegasus 7-60 Level",      system:"UX", blade:"Aero Pegasus",   ratchet:"7-60", bit:"Level",     role:"Attack",   tier:"S", note:"Leobardo #2 WC2025" },
   { label:"Phoenix Wing 1-60 Low Rush",   system:"BX", blade:"Phoenix Wing",   ratchet:"1-60", bit:"Low Rush",  role:"Attack",   tier:"A", note:"Alta velocità rail" },
   { label:"Shark Scale 1-70 Low Rush",    system:"UX", blade:"Shark Scale",    ratchet:"1-70", bit:"Low Rush",  role:"Attack",   tier:"A", note:"Balya #2 WC2025" },
   { label:"Shark Scale 3-60 Low Rush",    system:"UX", blade:"Shark Scale",    ratchet:"3-60", bit:"Low Rush",  role:"Attack",   tier:"A", note:"Leobardo #3 alt" },
-  { label:"Impact Drake 9-60 Low Rush",   system:"UX", blade:"Impact Drake",   ratchet:"9-60", bit:"Low Rush",  role:"Attack",   tier:"B", note:"KO consistente" },
-  { label:"Wyvern Hover 7-60 Low Rush",   system:"UX", blade:"Wyvern Hover",   ratchet:"7-60", bit:"Low Rush",  role:"Attack",   tier:"A", note:"Berguiny #1 WC2025" },
+  { label:"Wyvern Hover 9-60 Kick",       system:"UX", blade:"Wyvern Hover",   ratchet:"0-60", bit:"Kick",      role:"Attack",   tier:"A", note:"Standard hard hitter build di Wyvern" },
   // Spin-Eq
   { label:"Cobalt Dragoon 5-60 Elevate",  system:"BX", blade:"Cobalt Dragoon", ratchet:"5-60", bit:"Elevate",   role:"Spin-Eq",  tier:"S", note:"Meta spin-eq BX" },
   { label:"Cobalt Dragoon 1-60 Elevate",  system:"BX", blade:"Cobalt Dragoon", ratchet:"1-60", bit:"Elevate",   role:"Spin-Eq",  tier:"A", note:"Alternativa più bassa" },
-  { label:"Cobalt Dragoon 4-60 Elevate",  system:"BX", blade:"Cobalt Dragoon", ratchet:"4-60", bit:"Elevate",   role:"Spin-Eq",  tier:"A", note:"Bilanciato" },
-  { label:"Cobalt Dragoon 5-60 Elevate",  system:"UX", blade:"Cobalt Dragoon", ratchet:"5-60", bit:"Elevate",   role:"Spin-Eq",  tier:"A", note:"Balya #1 WC2025" },
-  // Defense
-  { label:"Wizard Rod 9-70 Ball",         system:"UX", blade:"Wizard Rod",     ratchet:"9-70", bit:"Ball",      role:"Defense",  tier:"A", note:"Berguiny #2 WC2025" },
-  { label:"Golem Rock 9-60 Orb",          system:"UX", blade:"Golem Rock",     ratchet:"9-60", bit:"Orb",       role:"Defense",  tier:"B", note:"Difesa passiva" },
+  { label:"Meteor Dragoon 7-60 Level",    system:"UX", blade:"Meteor Dragoon", ratchet:"7-60", bit:"level",     role:"Attack-Spin-Eq",  tier:"A", note:"Bilanciato con ottima LAD grazie a Level" },
 ];
 
 // ── ROLE / TIER COLORS ───────────────────────────────────────
