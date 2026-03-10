@@ -62,11 +62,11 @@ const CX_MAIN_BLADES = [
   "Stag","Volt","Wriggle",
 ];
 const CX_MAIN_BLADE_WEIGHTS = {
-  "Arc":18.5,"Blast":19.5,"Blitz Break":19,"Brave":19,"Brush":18.5,
-  "Dark":19,"Eclipse (Smash)":19,"Eclipse (Upper)":19,
-  "Fang":19,"Flame (Cerberus)":18.5,"Flame (Whale)":18.5,"Flare":18.5,"Flow":19,"Fortress Guard":20,
-  "Hunt":19,"Might":20,"Reaper (Hells)":19,"Reaper (Rhino)":20,
-  "Stag":18,"Volt":21,"Wriggle":18.5,
+  "Arc":31,"Blast":33,"Blitz Break":36,"Brave":31.2,"Brush":33.5,
+  "Dark":31,"Eclipse (Smash)":34,"Eclipse (Upper)":34,
+  "Fang":33,"Flame (Cerberus)":32.5,"Flame (Whale)":18.5,"Flare":33.5,"Flow":32,"Fortress Guard":36,
+  "Hunt":32,"Might":34,"Reaper (Hells)":31,"Reaper (Rhino)":33,
+  "Stag":31,"Volt":33,"Wriggle":32.5,
 };
 
 const RATCHETS = [
