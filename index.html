@@ -47,8 +47,12 @@ const isRib = r => r === "Turbo" || r === "Operate";
 const comboLabel = c => {
   if (!c) return "—";
   if (c.system === "CX") {
-    const ribOk = isRib(c.ratchet) ? (c.lockChip && c.mainBlade && c.assistBlade && c.ratchet) : (c.lockChip && c.mainBlade && c.assistBlade && c.ratchet && c.bit);
-    return ribOk ? `${c.lockChip} ${c.mainBlade} / ${c.assistBlade} ${c.ratchet}${isRib(c.ratchet)?"":" "+c.bit}` : "CX incompleta";
+    const ok = isRib(c.ratchet)
+      ? (c.lockChip && c.assistBlade && c.mainBlade && c.ratchet)
+      : (c.lockChip && c.assistBlade && c.mainBlade && c.ratchet && c.bit);
+    if (!ok) return "CX incompleta";
+    const rib = isRib(c.ratchet) ? "" : ` ${c.bit}`;
+    return `${c.lockChip} / ${c.assistBlade} ${c.mainBlade} ${c.ratchet}${rib}`;
   }
   if (isRib(c.ratchet)) return (c.blade && c.ratchet) ? `${c.blade} ${c.ratchet}` : "—";
   return (c.blade && c.ratchet && c.bit) ? `${c.blade} ${c.ratchet} ${c.bit}` : "—";
@@ -56,8 +60,8 @@ const comboLabel = c => {
 const isComplete = c => {
   if (!c) return false;
   if (c.system === "CX") return isRib(c.ratchet)
-    ? !!(c.lockChip && c.mainBlade && c.assistBlade && c.ratchet)
-    : !!(c.lockChip && c.mainBlade && c.assistBlade && c.ratchet && c.bit);
+    ? !!(c.lockChip && c.assistBlade && c.mainBlade && c.ratchet)
+    : !!(c.lockChip && c.assistBlade && c.mainBlade && c.ratchet && c.bit);
   return isRib(c.ratchet) ? !!(c.blade && c.ratchet) : !!(c.blade && c.ratchet && c.bit);
 };
 const blankCombo  = () => ({ system:"BX", blade:"", lockChip:"", mainBlade:"", assistBlade:"", ratchet:"", bit:"" });
