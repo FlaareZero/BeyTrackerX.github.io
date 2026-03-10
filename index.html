@@ -312,8 +312,9 @@ function MetaPresetsPanel({ onApply }) {
 /* ─── COMBO FORM ────────────────────────────────────────────── */
 function ComboForm({ combo, onChange, showStats, showPresets, onPresetApply }) {
   const ac     = SYS_COL[combo.system];
-  const blades = combo.system==="UX" ? UX_BLADES : combo.system==="CX" ? CX_BLADES : BX_BLADES;
+  const blades = combo.system==="UX" ? UX_BLADES : BX_BLADES;
   const rib    = isRib(combo.ratchet);
+  const isCX   = combo.system === "CX";
   const handleRatchet = v => {
     onChange("ratchet", v);
     if (isRib(v) && combo.bit) onChange("bit", "");
@@ -330,16 +331,29 @@ function ComboForm({ combo, onChange, showStats, showPresets, onPresetApply }) {
           </button>
         ))}
       </div>
-      <div className="row2">
-        <Sel val={combo.blade}   onChange={v => onChange("blade",v)}   opts={blades}   ph="Blade"   accent={ac}/>
-        <Sel val={combo.ratchet} onChange={handleRatchet}              opts={RATCHETS} ph="Ratchet" accent={ac}/>
-      </div>
-      {rib
-        ? <div style={{textAlign:'center',fontSize:'0.78rem',color:'var(--text-dimmer)',padding:'4px 0'}}>
-            🔩 Rib — bit integrato
+      {isCX ? (
+        <>
+          <Sel val={combo.lockChip}    onChange={v => onChange("lockChip",v)}    opts={CX_LOCK_CHIPS}    ph="Lock Chip"    accent={ac}/>
+          <Sel val={combo.assistBlade} onChange={v => onChange("assistBlade",v)} opts={CX_ASSIST_BLADES} ph="Assist Blade" accent={ac}/>
+          <Sel val={combo.mainBlade}   onChange={v => onChange("mainBlade",v)}   opts={CX_MAIN_BLADES}   ph="Main Blade"   accent={ac}/>
+          <Sel val={combo.ratchet}     onChange={handleRatchet}                  opts={RATCHETS}         ph="Ratchet"      accent={ac}/>
+          {rib
+            ? <div style={{textAlign:'center',fontSize:'0.78rem',color:'var(--text-dimmer)',padding:'4px 0'}}>🔩 Rib — bit integrato</div>
+            : <Sel val={combo.bit} onChange={v => onChange("bit",v)} opts={BIT_NAMES} ph="Bit" accent={ac}/>
+          }
+        </>
+      ) : (
+        <>
+          <div className="row2">
+            <Sel val={combo.blade}   onChange={v => onChange("blade",v)}   opts={blades}   ph="Blade"   accent={ac}/>
+            <Sel val={combo.ratchet} onChange={handleRatchet}              opts={RATCHETS} ph="Ratchet" accent={ac}/>
           </div>
-        : <Sel val={combo.bit} onChange={v => onChange("bit",v)} opts={BIT_NAMES} ph="Bit" accent={ac}/>
-      }
+          {rib
+            ? <div style={{textAlign:'center',fontSize:'0.78rem',color:'var(--text-dimmer)',padding:'4px 0'}}>🔩 Rib — bit integrato</div>
+            : <Sel val={combo.bit} onChange={v => onChange("bit",v)} opts={BIT_NAMES} ph="Bit" accent={ac}/>
+          }
+        </>
+      )}
       {showStats && <ComboStatsCard combo={combo}/>}
       {showPresets && onPresetApply && <MetaPresetsPanel onApply={onPresetApply}/>}
     </div>
