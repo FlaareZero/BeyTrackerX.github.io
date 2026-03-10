@@ -92,7 +92,6 @@ const BITS_DATA = [
   _B("Wedge",       "Defense", 3,4,7,4, "Resiste bene ai colpi grazie al piccolo punto di contatto"),
   _B("Wall Wedge",  "Defense", 4,4,6,3, "Come Wedge ma più stabile grazie alle protuzioni laterali"),
   // Balance
-  _B("Operate",     "Balance", 5,6,5,6, "Comportamento variabile in base all'angolo di lancio"),
   _B("Glide",       "Balance", 4,6,6,7, "Base rotonda, movimento bilanciato consistente"),
   _B("Wall Ball",   "Balance", 4,5,7,5, "Anello wall stabilizza contro il pavimento dello stadio"),
   _B("Kick",        "Balance", 8,5,3,4, "Incrocio Hexa/Taper: aggressività e LAD alta"),
@@ -110,25 +109,18 @@ const META_PRESETS = [
   // Stamina
   { label:"Wizard Rod 9-60 Ball",         system:"UX", blade:"Wizard Rod",     ratchet:"9-60", bit:"Ball",      role:"Stamina",  tier:"S", note:"Benchmark stamina WC2025" },
   { label:"Wizard Rod 1-60 Hexa",         system:"UX", blade:"Wizard Rod",     ratchet:"1-60", bit:"Hexa",      role:"Stamina",  tier:"A", note:"Leobardo #1 WC2025" },
-  { label:"Wizard Rod 5-70 Disk Ball",    system:"UX", blade:"Wizard Rod",     ratchet:"5-70", bit:"Disk Ball", role:"Stamina",  tier:"A", note:"Alta LAD, stabile" },
   { label:"Silver Wolf 9-60 Free Ball",   system:"UX", blade:"Silver Wolf",    ratchet:"9-60", bit:"Free Ball", role:"Stamina",  tier:"A", note:"Ibrido stamina/difesa" },
-  { label:"Clock Mirage 3-60 Low Orb",    system:"UX", blade:"Clock Mirage",   ratchet:"3-60", bit:"Low Orb",   role:"Stamina",  tier:"B", note:"Build bassa, ottima LAD" },
+  { label:"Clock Mirage 4-55 Low Orb",    system:"UX", blade:"Clock Mirage",   ratchet:"4-55", bit:"Low Orb",   role:"Stamina",  tier:"B", note:"Build bassa, ottima LAD" },
   // Attack
   { label:"Aero Pegasus 3-60 Low Rush",   system:"UX", blade:"Aero Pegasus",   ratchet:"3-60", bit:"Low Rush",  role:"Attack",   tier:"S", note:"Leobardo #3 WC2025" },
   { label:"Aero Pegasus 7-60 Level",      system:"UX", blade:"Aero Pegasus",   ratchet:"7-60", bit:"Level",     role:"Attack",   tier:"S", note:"Leobardo #2 WC2025" },
   { label:"Phoenix Wing 1-60 Low Rush",   system:"BX", blade:"Phoenix Wing",   ratchet:"1-60", bit:"Low Rush",  role:"Attack",   tier:"A", note:"Alta velocità rail" },
   { label:"Shark Scale 1-70 Low Rush",    system:"UX", blade:"Shark Scale",    ratchet:"1-70", bit:"Low Rush",  role:"Attack",   tier:"A", note:"Balya #2 WC2025" },
-  { label:"Shark Scale 3-60 Low Rush",    system:"UX", blade:"Shark Scale",    ratchet:"3-60", bit:"Low Rush",  role:"Attack",   tier:"A", note:"Leobardo #3 alt" },
-  { label:"Impact Drake 9-60 Low Rush",   system:"UX", blade:"Impact Drake",   ratchet:"9-60", bit:"Low Rush",  role:"Attack",   tier:"B", note:"KO consistente" },
-  { label:"Wyvern Hover 7-60 Low Rush",   system:"UX", blade:"Wyvern Hover",   ratchet:"7-60", bit:"Low Rush",  role:"Attack",   tier:"A", note:"Berguiny #1 WC2025" },
+  { label:"Shark Scale 3-60 Rush",        system:"UX", blade:"Shark Scale",    ratchet:"3-60", bit:"Rush",      role:"Attack",   tier:"A", note:"Alternativa alla combo sopra" },
+  { label:"Wyvern Hover 9-60 Kick",       system:"UX", blade:"Wyvern Hover",   ratchet:"9-60", bit:"Kick",      role:"Attack",   tier:"A", note:"LA Combo della Viverna" },
   // Spin-Eq
   { label:"Cobalt Dragoon 5-60 Elevate",  system:"BX", blade:"Cobalt Dragoon", ratchet:"5-60", bit:"Elevate",   role:"Spin-Eq",  tier:"S", note:"Meta spin-eq BX" },
-  { label:"Cobalt Dragoon 1-60 Elevate",  system:"BX", blade:"Cobalt Dragoon", ratchet:"1-60", bit:"Elevate",   role:"Spin-Eq",  tier:"A", note:"Alternativa più bassa" },
-  { label:"Cobalt Dragoon 4-60 Elevate",  system:"BX", blade:"Cobalt Dragoon", ratchet:"4-60", bit:"Elevate",   role:"Spin-Eq",  tier:"A", note:"Bilanciato" },
-  { label:"Cobalt Dragoon 5-60 Elevate",  system:"UX", blade:"Cobalt Dragoon", ratchet:"5-60", bit:"Elevate",   role:"Spin-Eq",  tier:"A", note:"Balya #1 WC2025" },
-  // Defense
-  { label:"Wizard Rod 9-70 Ball",         system:"UX", blade:"Wizard Rod",     ratchet:"9-70", bit:"Ball",      role:"Defense",  tier:"A", note:"Berguiny #2 WC2025" },
-  { label:"Golem Rock 9-60 Orb",          system:"UX", blade:"Golem Rock",     ratchet:"9-60", bit:"Orb",       role:"Defense",  tier:"B", note:"Difesa passiva" },
+  { label:"Meteor Dragoon 7-60 Level",    system:"UX", blade:"Meteor Dragoon", ratchet:"9-60", bit:"Level",     role:"Spin-Eq",  tier:"A", note:"Come il bey sopra, eccellente attacker con ottima capacità di Spin-steal" },
 ];
 
 // ── ROLE / TIER COLORS ───────────────────────────────────────
@@ -159,7 +151,8 @@ const RATCHET_DATA = {
   "3-80":[80,3,40,-2,5,-1], "4-80":[80,4,38,-1,5,0],  "5-80":[80,5,36,0,5,0],
   "6-80":[80,6,34,0,5,1],   "7-80":[80,7,32,1,5,1],   "9-80":[80,9,30,2,5,2],
   // Special
-  "ATr": [70,0,65,-3,1,0],  "M-85":[85,0,28,-5,6,-3], "3-85":[85,3,30,-2,6,-2],
+  "Turbo": [70,0,65,-3,1,0],  "M-85":[85,0,28,-5,6,-3], "3-85":[85,3,30,-2,6,-2],
+  "Operate": [70,5,6,5,6,0],
 };
 
 // ── PART WEIGHTS (grammi, fonte: beybladeplanner.com / beyblade wiki) ─────
@@ -170,7 +163,7 @@ const RATCHET_WEIGHTS = {
   "5-70":6.7,  "7-70":6.9,  "9-70":6.8,  "D5-70":6.7, "4-55":6.0,
   "0-80":6.5,  "1-80":6.6,  "2-80":6.7,  "3-80":6.75, "4-80":6.8,
   "5-80":6.85, "6-80":6.9,  "7-80":7.0,  "9-80":6.85,
-  "ATr":6.0,   "M-85":7.2,  "3-85":7.0,
+  "Turbo":6.0,   "M-85":7.2,  "3-85":7.0,  "Operate":8.4,
 };
 
 const BIT_WEIGHTS = {
@@ -183,7 +176,7 @@ const BIT_WEIGHTS = {
   "Elevate":2.4,    "Hexa":2.45,
   "Needle":2.2,     "Spike":2.2,       "Dot":2.1,        "Gear Needle":2.3,
   "Wedge":2.3,      "Wall Wedge":2.41,
-  "Operate":2.4,    "Glide":2.4,       "Wall Ball":2.45, "Kick":2.4,
+  "Glide":2.4,       "Wall Ball":2.45, "Kick":2.4,
   "Unite":2.4,
 };
 
@@ -303,7 +296,7 @@ const BLADE_STATS = {
 };
 
 // ── COSTANTI UI ───────────────────────────────────────────────
-const FINISH_TYPES = ["KO", "Xtreme Finish", "Burst", "OS (Outspin)", "Pareggio"];
+const FINISH_TYPES = ["KO", "Xtreme Finish", "Burst", "OS (Outspin)"];
 const SYS_COL  = { BX:"#00b4ff", UX:"#a855f7", CX:"#f59e0b" };
 const TYPE_COL = { Attack:"#ef4444", Stamina:"#22c55e", Defense:"#3b82f6", Balance:"#f59e0b" };
 const STAT_BARS = [["VEL","speed","#ef4444"],["STA","stamina","#22c55e"],["DIF","defense","#3b82f6"],["BST","burst","#f59e0b"]];
