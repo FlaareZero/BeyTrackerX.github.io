@@ -1,4 +1,4 @@
-const CACHE = 'beytrackerx-v9';
+const CACHE = 'beytrackerx-stable';
 const ASSETS = [
   './',
   './index.html',
