@@ -523,35 +523,163 @@ function ComboForm({ combo, onChange, showStats, showPresets, onPresetApply }) {
   );
 }
 
-/* ─── LOG MODAL ─────────────────────────────────────────────── */
-function LogModal({ myCombo, opp, onLog, onClose }) {
+/* ─── LOG SHEET ──────────────────────────────────────────────── */
+function LogSheet({ onLog }) {
   const [finish, setFinish] = useState("");
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-sheet" onClick={e => e.stopPropagation()}>
-        <div className="modal-handle"/>
-        <div className="modal-subtitle">La tua combo</div>
-        <div className="modal-vs">{comboLabel(myCombo)}</div>
-        <div className="modal-subtitle">vs avversario</div>
-        <div className="modal-vs" style={{marginBottom:14}}>{comboLabel(opp)}</div>
-        <div className="modal-finish-label">Tipo di fine</div>
-        <div className="modal-finish-btns">
-          {FINISH_TYPES.map(f => (
-            <button key={f} className="finish-btn"
-              style={{ background:finish===f?'rgba(0,180,255,0.15)':'var(--bg-btn-ghost)',
-                       borderColor:finish===f?'#00b4ff':'var(--border-btn)',
-                       color:finish===f?'#00b4ff':'var(--text-secondary)' }}
-              onClick={() => setFinish(f)}>{f}</button>
-          ))}
+    <div style={{background:'var(--bg-card2)',border:'1px solid var(--border-card2)',
+                 borderRadius:10,padding:'12px 10px',marginTop:8}}>
+      <div style={{fontSize:9,fontWeight:800,letterSpacing:'1px',color:'var(--text-dimmer)',marginBottom:6}}>
+        TIPO DI FINE
+      </div>
+      <div className="modal-finish-btns" style={{marginBottom:10}}>
+        {FINISH_TYPES.map(f => (
+          <button key={f} className="finish-btn"
+            style={{ background:finish===f?'rgba(0,180,255,0.15)':'var(--bg-btn-ghost)',
+                     borderColor:finish===f?'#00b4ff':'var(--border-btn)',
+                     color:finish===f?'#00b4ff':'var(--text-secondary)' }}
+            onClick={() => setFinish(f)}>{f}</button>
+        ))}
+      </div>
+      <div className="result-btns">
+        {[['win','VITTORIA','#22c55e'],['draw','PAREGGIO','#f59e0b'],['loss','SCONFITTA','#ef4444']].map(([r,label,col]) => (
+          <button key={r} className="result-btn"
+            style={{ background:`${col}14`, borderColor:col, color:col }}
+            onClick={() => { onLog(r, finish); setFinish(""); }}>{label}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── SESSION VIEW ───────────────────────────────────────────── */
+function SessionView({ myCombo, opponents, onLog, onEnd }) {
+  const completedOpps = (opponents||[]).filter(o => isComplete(o));
+  const [activeOppId, setActiveOppId] = useState(
+    () => (completedOpps[0]?.id ?? null)
+  );
+  const [sessionLog, setSessionLog] = useState([]);
+
+  const ac = SYS_COL[myCombo.system] || '#00b4ff';
+  const myLabel = comboLabel(myCombo);
+  const activeOpp = completedOpps.find(o => o.id === activeOppId) || null;
+
+  const handleLog = (result, finish) => {
+    const oppLabel = activeOpp ? comboLabel(activeOpp) : "—";
+    onLog(result, finish, activeOpp);
+    setSessionLog(prev => [{
+      result, finish, oppLabel,
+      ts: new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+    }, ...prev]);
+  };
+
+  const wins   = sessionLog.filter(l => l.result==='win').length;
+  const losses = sessionLog.filter(l => l.result==='loss').length;
+  const draws  = sessionLog.filter(l => l.result==='draw').length;
+  const total  = sessionLog.length;
+  const wr     = total > 0 ? Math.round(wins/total*100) : null;
+
+  return (
+    <div style={{paddingBottom:32}}>
+      {/* HEADER SESSIONE */}
+      <div style={{background:`linear-gradient(135deg,${ac}18,${ac}06)`,
+                   border:`1px solid ${ac}44`,borderRadius:14,
+                   padding:'16px 14px',marginBottom:12}}>
+        <div style={{fontSize:9,fontWeight:800,letterSpacing:'2px',color:ac,marginBottom:4}}>
+          SESSIONE DI TEST
         </div>
-        <div className="result-btns">
-          {[['win','VITTORIA','#22c55e'],['draw','PAREGGIO','#f59e0b'],['loss','SCONFITTA','#ef4444']].map(([r,label,col]) => (
-            <button key={r} className="result-btn"
-              style={{ background:`${col}14`, borderColor:col, color:col }}
-              onClick={() => { onLog(r,finish); onClose(); }}>{label}</button>
+        <div style={{fontSize:15,fontWeight:900,color:'var(--text-card)',marginBottom:12,
+                     overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+          {myLabel}
+        </div>
+        <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+          {[['V',wins,'#22c55e'],['P',losses,'#ef4444'],['=',draws,'#f59e0b']].map(([lbl,val,col])=>(
+            <div key={lbl} style={{display:'flex',alignItems:'center',gap:4,
+              background:`${col}14`,border:`1px solid ${col}33`,borderRadius:7,padding:'3px 10px'}}>
+              <span style={{fontSize:15,fontWeight:900,color:col}}>{val}</span>
+              <span style={{fontSize:9,fontWeight:700,color:col,opacity:0.8}}>{lbl}</span>
+            </div>
           ))}
+          {wr !== null && (
+            <span style={{marginLeft:'auto',fontSize:14,fontWeight:900,
+              color:wr>=60?'#22c55e':wr>=40?'#f59e0b':'#ef4444'}}>
+              {wr}% WR
+            </span>
+          )}
         </div>
       </div>
+
+      {/* SELETTORE AVVERSARIO + LOG */}
+      <div style={{background:'var(--bg-card)',border:'1px solid var(--border-card)',
+                   borderRadius:12,padding:'12px',marginBottom:10}}>
+        <div style={{fontSize:9,fontWeight:800,letterSpacing:'1px',color:'var(--text-dimmer)',marginBottom:8}}>
+          AVVERSARIO
+        </div>
+        {completedOpps.length === 0 ? (
+          <div style={{fontSize:11,color:'var(--text-ghost)',textAlign:'center',padding:'10px 0'}}>
+            Nessun avversario completo — torna indietro e completane uno.
+          </div>
+        ) : (
+          <>
+            <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:10}}>
+              {completedOpps.map(o => {
+                const sel = o.id === activeOpp?.id;
+                const oc  = SYS_COL[o.system]||'#00b4ff';
+                return (
+                  <button key={o.id} onClick={()=>setActiveOppId(o.id)} style={{
+                    background: sel?`${oc}22`:'var(--bg-btn-ghost)',
+                    border:`1px solid ${sel?oc:'var(--border-btn)'}`,
+                    color: sel?oc:'var(--text-dimmer)',
+                    borderRadius:7,padding:'5px 10px',fontSize:10,fontWeight:700,cursor:'pointer',
+                    maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
+                  }}>{comboLabel(o)}</button>
+                );
+              })}
+            </div>
+            {activeOpp && <LogSheet onLog={handleLog}/>}
+          </>
+        )}
+      </div>
+
+      {/* STORICO SESSIONE */}
+      {sessionLog.length > 0 && (
+        <div style={{background:'var(--bg-card)',border:'1px solid var(--border-card)',
+                     borderRadius:12,padding:'12px',marginBottom:12}}>
+          <div style={{fontSize:9,fontWeight:800,letterSpacing:'1px',
+                       color:'var(--text-dimmer)',marginBottom:8}}>
+            STORICO SESSIONE &middot; {total} match
+          </div>
+          {sessionLog.map((l,i) => {
+            const col = l.result==='win'?'#22c55e':l.result==='loss'?'#ef4444':'#f59e0b';
+            const lbl = l.result==='win'?'V':l.result==='loss'?'P':'=';
+            return (
+              <div key={i} style={{display:'flex',alignItems:'center',gap:8,
+                padding:'7px 0',borderBottom:i<sessionLog.length-1?'1px solid var(--border-card2)':'none'}}>
+                <span style={{minWidth:18,height:18,borderRadius:4,display:'flex',alignItems:'center',
+                  justifyContent:'center',fontWeight:900,fontSize:10,flexShrink:0,
+                  background:`${col}18`,color:col,border:`1px solid ${col}40`}}>{lbl}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:10,color:'var(--text-secondary)',fontWeight:700,
+                    overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                    vs {l.oppLabel}
+                  </div>
+                  {l.finish && <div style={{fontSize:9,color:'var(--text-ultra)'}}>{l.finish}</div>}
+                </div>
+                <span style={{fontSize:9,color:'var(--text-ghost)',flexShrink:0}}>{l.ts}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* FINE SESSIONE */}
+      <button onClick={onEnd} style={{
+        width:'100%',padding:'14px',borderRadius:12,cursor:'pointer',
+        fontWeight:800,fontSize:13,letterSpacing:'0.5px',
+        background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.35)',color:'#ef4444',
+      }}>
+        ✓ Fine sessione
+      </button>
     </div>
   );
 }
@@ -1212,8 +1340,8 @@ function BattlePassView({ myCombo, decks }) {
 function App() {
   const saved = (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } })();
   const [s, d] = useReducer(reducer, saved || INIT_STATE);
-  const [theme, setTheme]     = useState(() => localStorage.getItem('beytrackerx_theme') || 'dark');
-  const [logOppId, setLogOppId] = useState(null);
+  const [theme, setTheme]   = useState(() => localStorage.getItem('beytrackerx_theme') || 'dark');
+  const [inSession, setInSession] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -1223,8 +1351,6 @@ function App() {
   }, [theme]);
 
   const toggleTheme = () => setTheme(p => p==='dark' ? 'light' : 'dark');
-  const logOpp = logOppId ? (s.opponents||[]).find(o => o.id===logOppId) : null;
-
   // Applica un preset meta alla "tua combo"
   const applyPreset = (p) => {
     d({type:"MY",f:"system",  v:p.system});
@@ -1271,7 +1397,7 @@ function App() {
           <div className="content">
 
             {/* TRACKER */}
-            {s.view==="tracker" && (
+            {s.view==="tracker" && !inSession && (
               <>
                 <div className="my-combo-card">
                   <div className="card-header">
@@ -1283,6 +1409,16 @@ function App() {
                     showStats={isComplete(s.myCombo)}
                     showPresets={true}
                     onPresetApply={applyPreset}/>
+                  {isComplete(s.myCombo) && (s.opponents||[]).some(o => isComplete(o)) && (
+                    <button onClick={() => setInSession(true)} style={{
+                      width:'100%',marginTop:12,padding:'12px',borderRadius:10,cursor:'pointer',
+                      fontWeight:800,fontSize:13,letterSpacing:'0.5px',
+                      background:'linear-gradient(135deg,#0066cc,#0044aa)',
+                      border:'1px solid #0088ff',color:'#fff',
+                    }}>
+                      ▶ Inizia sessione di test
+                    </button>
+                  )}
                 </div>
                 <div className="section-header">
                   <span className="section-title">Avversari</span>
@@ -1297,18 +1433,22 @@ function App() {
                         <button className="del-btn" onClick={() => d({type:"DEL_OPP",id:opp.id})}>×</button>
                       </div>
                       <ComboForm combo={opp} onChange={(f,v) => d({type:"OPP",id:opp.id,f,v})}/>
-                      <div className="opp-actions">
-                        <button
-                          className={`register-btn ${isComplete(s.myCombo)&&isComplete(opp)?'enabled':'disabled'}`}
-                          onClick={() => isComplete(s.myCombo)&&isComplete(opp)&&setLogOppId(opp.id)}>
-                          ⚔ Log
-                        </button>
-                      </div>
                     </div>
                   </div>
                 ))}
                 <ComboCompareRadar myCombo={s.myCombo} opponents={s.opponents||[]}/>
               </>
+            )}
+            {/* SESSION */}
+            {s.view==="tracker" && inSession && (
+              <SessionView
+                myCombo={s.myCombo}
+                opponents={s.opponents||[]}
+                onLog={(result, finish, opp) => {
+                  if (opp) d({type:"LOG", oppId:opp.id, r:result, finish});
+                }}
+                onEnd={() => setInSession(false)}
+              />
             )}
 
             {/* DECK */}
@@ -1383,14 +1523,7 @@ function App() {
         ))}
       </nav>
 
-      {/* LOG MODAL */}
-      {logOpp && (
-        <LogModal
-          myCombo={s.myCombo} opp={logOpp}
-          onLog={(r,finish) => d({type:"LOG",oppId:logOppId,r,finish})}
-          onClose={() => setLogOppId(null)}
-        />
-      )}
+
     </div>
   );
 }
